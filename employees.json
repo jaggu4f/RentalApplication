@@ -1,0 +1,32 @@
+{
+  "0": {
+    "ownerDetails": {
+      "ownerName": "Sachin Kumar",
+      "complexName": "Sachin Complex",
+      "complexAddress": "Vijayanagar Bangalore",
+      "phNo": "9535846887",
+      "email": "abc@gmail.com"
+    },
+    "userList": []
+  },
+  "1": {
+    "ownerDetails": {
+      "ownerName": "Santosh Kumar",
+      "complexName": "Santosh Complex",
+      "complexAddress": "Vijayanagar Bangalore",
+      "phNo": "9535846887",
+      "email": "abc@gmail.com"
+    },
+    "userList": []
+  },
+  "2": {
+    "ownerDetails": {
+      "ownerName": "Jagadeesh Kumar",
+      "complexName": "Jagadeesh Complex",
+      "complexAddress": "Vijayanagar Bangalore",
+      "phNo": "9535846887",
+      "email": "abc@gmail.com"
+    },
+    "userList": []
+  }
+}

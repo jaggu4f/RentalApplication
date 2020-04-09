@@ -1,0 +1,2266 @@
+[
+    {
+        "ownerDetails": {
+            "ownerName" : "Sachin Kumar",
+            "complexName":"Sachin Complex",
+            "complexAddress":"Vijayanagar Bangalore",
+            "phNo":"9535846887",
+            "email":"abc@gmail.com"
+        },
+        "userList":[
+            {
+                
+                    "personalInfo" : {
+                        "name" : "Sachin",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1936",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            },
+            {
+               
+                    "personalInfo" : {
+                        "name" : "Sachin1",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1755",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+               
+            },
+            {
+                "personalInfo" :{
+                        "name" : "Sachin2",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1821",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+               
+            },
+            {
+               
+                    "personalInfo" : {
+                        "name" : "Sachin3",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1455",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            },
+            {
+                
+                    "personalInfo" : {
+                        "name" : "Sachin4",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1320",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+
+            },
+            {
+               
+                    "personalInfo" : {
+                        "name" : "Sachin5",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1790",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            }
+        ]
+    },
+    {
+        "ownerDetails": {
+            "ownerName" : "Santosh Kumar",
+            "complexName":"Santosh Complex",
+            "complexAddress":"Vijayanagar Bangalore",
+            "phNo":"9535846887",
+            "email":"abc@gmail.com"
+        },
+        "userList":[
+            {
+               
+                    "personalInfo" : {
+                        "name" : "Santosh",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1936",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+
+            },
+            {
+                
+                    "personalInfo" : {
+                        "name" : "Santosh1",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1755",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            },
+            {
+                
+                    "personalInfo" : {
+                        "name" : "Santosh2",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1821",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            },
+            {
+                
+                    "personalInfo" : {
+                        "name" : "Santosh3",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1455",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            },
+            {
+                
+                    "personalInfo" : {
+                        "name" : "Santosh4",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1320",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            },
+            {
+               
+                    "personalInfo" : {
+                        "name" : "Santosh5",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1790",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            }
+        ]
+    },
+    {
+        "ownerDetails": {
+            "ownerName" : "Jagadeesh Kumar",
+            "complexName":"Jagadeesh Complex",
+            "complexAddress":"Vijayanagar Bangalore",
+            "phNo":"9535846887",
+            "email":"abc@gmail.com"
+        },
+        "userList":[
+            {
+                
+                    "personalInfo" : {
+                        "name" : "Jagadeesh",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1936",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            },
+            {
+               
+                    "personalInfo" : {
+                        "name" : "Jagadeesh1",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1755",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            },
+            {
+                
+                    "personalInfo" : {
+                        "name" : "Jagadeesh2",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1821",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            },
+            {
+               
+                    "personalInfo" : {
+                        "name" : "Jagadeesh3",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1455",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            },
+            {
+               
+                    "personalInfo" : {
+                        "name" : "Jagadeesh4",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1320",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            },
+            {
+               
+                    "personalInfo" : {
+                        "name" : "Jagadeesh5",
+                        "surname" : "B",
+                        "phNo" : "9535846887",
+                        "address" : "Vijayanagar Bangalore"
+                    },
+                    "meterInfo" : {
+                        "homeNo" : "10",
+                        "clNo" : "1790",
+                        "dueAmount" : "0",
+                        "type" : "AH"
+                    },
+                    "recentPaymentsInfo" : {
+                        "month" : "Jan",
+                        "rent" : "8000",
+                        "paid" : "6000",
+                        "balance" : "2000",
+                        "total" : "6000",
+                        "remarks" : "2000Rs is due"
+                    },
+                    "advanceDetails" : {
+                        "date" : "Jan",
+                        "advance" : "50000",
+                        "paid" : "30000",
+                        "balance" : "20000",
+                        "total" : "30000",
+                        "remarks" : "Rs 20000 is due"
+                    },
+                    "rentDetails" : [
+                        {
+                            "year" : 2019,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "10000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        },
+                        {
+                            "year" : 2020,
+                            "month" : [
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                },
+                                {  
+                                    "month": "January",  
+                                    "rent": "8000",
+                                    "paid": "6000",
+                                    "balance": "2000",
+                                    "total": "6000",
+                                    "remarks": "2000Rs is due"
+                                }
+                            ]
+                        }
+                    ]
+                
+            }
+        ]
+    }
+]

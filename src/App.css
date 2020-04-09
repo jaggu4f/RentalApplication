@@ -36,3 +36,154 @@
     transform: rotate(360deg);
   }
 }
+.card-group{
+    width: 98%;
+    margin: 0 auto;
+    padding-bottom: 50px;
+    margin-top: 20px;
+}
+.card-title{
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    margin-bottom : 0px !important;
+}
+.card-body{
+  padding: 0px !important;
+}
+.expandIcon{
+  float: right;
+}
+.css-2b097c-container{
+  width: 20%;
+  float: left;
+  right: 102px;
+  bottom: 8px;
+}
+.ReactTable{
+  clear: both;
+  width: 98%;
+  margin: 0 auto;
+}
+p.selectYear{
+  width: 19%;
+  float: left;
+  padding-bottom: 10px;
+}
+.logo{
+  width: 98%;
+  height: 500px;
+  object-fit: fill;
+}
+.footer{
+  padding: 30px 0px; 
+    border: 1px solid black;
+    margin-top: 20px;
+    background: #343a40;
+    color: white;
+}
+.footerData{
+  width: 50%;
+    float: left;
+    margin-top: -10px;
+}
+.footerData p{
+  float: left;
+  width: 50%;
+}
+.accordion .card-header{
+  padding: 0px;
+}
+.accordion .card-header > a{
+  float: left;
+}
+.accordion .card-header button.btn.btn-link:first-child{
+  font-size: 20px ;
+  float: left ;
+  padding-left: 50px ;
+}
+.accordion .card-header button.btn.btn-link:last-child{
+  font-size: 20px;
+  float: right;
+  padding-right: 50px;
+}
+.accordion{
+  height: 620px;
+}
+.accordion .card-body{
+  margin: 0 auto;
+}
+.accordion .card-title{
+  background: darkgray;
+    padding: 5px;
+    color: white;
+}
+.accordion .card-group{
+  padding-bottom: 20px;
+}
+.isExpand{
+  position: relative;
+    top: 50%;
+}
+.card-text input{
+  margin-left: 10px;
+}
+a.addIcon{
+  margin-right: 25px;
+  cursor: pointer;
+}
+a.deleteIcon{
+  margin-left:70%;
+  cursor: pointer;
+}
+a.editIcon,a.editIconLink{
+  float:none !important;
+  cursor: pointer;
+}
+.addUser{
+  width: 75%;
+    margin: 0 auto;
+    border: 1px solid lightgray;
+    padding: 20px;
+
+}
+.addUser label{
+  float: left;
+}
+.addUser h4{
+  float: left;
+  margin-bottom: 20px;
+}
+.addUser .form-row{
+  clear: both;
+}
+.addUser .react-datepicker-wrapper{
+  width:100%;
+}
+.yearBtn{
+  float: left;
+    margin-top: -8px;
+    margin-left: -102px;
+}
+.addUser .buttons button{
+  margin: 0px 20px;
+}
+.errorClass{
+  border:1px solid red;
+}
+.footerData p{
+  width:50%;
+}
+.carousel-item{
+  height:400px;
+}
+.carousel-caption{
+  color:black !important;
+}
+.addUser label span{
+  color:red;
+}
+.addUser .errorClassFields{
+  color:red;
+}
