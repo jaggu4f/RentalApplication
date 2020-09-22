@@ -1,7 +1,7 @@
 var express = require('express');
 var app = express();
 var cors = require('cors');
-var port = process.env.port || 8081;
+var port = process.env.port || 3000;
 var bodyParser = require('body-parser');
 var fs = require("fs");
 // let getComplexDetails = require('./src/data/getComplexDetails.json');
@@ -216,7 +216,7 @@ app.post('/updateUser', urlencodedParser, function (req, res) {
 
     
     
-var server = app.listen(8081, function () {
+var server = app.listen(3000, function () {
    var host = server.address().address
    var port = server.address().port
    
