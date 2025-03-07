@@ -24,23 +24,43 @@ jobs:
 
       - name: Call OpenAI for Review
         id: ai_review
+        shell: bash
         run: |
+          # Ensure pr_diff.txt exists and is not empty
+          if [ ! -f pr_diff.txt ] || [ ! -s pr_diff.txt ]; then
+            echo "⚠️ No code changes detected in PR or pr_diff.txt is missing. Skipping AI review."
+            exit 0
+          fi
+
+          # Read and escape PR diff content properly
+          DIFF_CONTENT=$(jq -Rs '.' < pr_diff.txt)
+
+          # Construct the JSON payload safely using jq
+          JSON_PAYLOAD=$(jq -n --arg diff "$DIFF_CONTENT" '{
+            "model": "gpt-4",
+            "messages": [
+              { "role": "system", "content": "You are an expert code reviewer. Analyze the given code diff and provide constructive feedback." },
+              { "role": "user", "content": ("Here is the code diff:\n" + $diff + "\nPlease review and provide comments.") }
+            ]
+          }')
+
+          # 🔍 Debugging: Print the full JSON payload before sending it
+          echo "🔍 JSON Payload (Formatted):"
+          echo "$JSON_PAYLOAD" | jq .
+
+          # Call OpenAI API
           RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
             -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
             -H "Content-Type: application/json" \
-            -d 'data = {
-              "model": "gpt-4",
-              "messages": [
-                {"role": "user", "content": "Where was it played?"}
-              ]
-            }')
+            -d "$JSON_PAYLOAD")
 
           echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
-
-          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
+          
+          # Extract the review comment from OpenAI's response
+          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content' || echo "⚠️ Error parsing AI response.")
 
           if [ -z "$REVIEW_COMMENT" ] || [ "$REVIEW_COMMENT" = "null" ]; then
-            REVIEW_COMMENT="🤖 AI Review: No comments were generated. Please check the input."
+            REVIEW_COMMENT="🤖 AI Review: No comments were generated. Please check the input or refine the prompt."
           fi
 
           echo "$REVIEW_COMMENT" > review_comment.txt
