@@ -10,12 +10,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Get PR Diff
+      - name: Fetch PR Diff
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
-          git diff origin/${{ github.event.pull_request.base.ref }} > pr_diff.txt
+          git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
+
+      - name: Debug PR Diff Content
+        run: |
+          echo "🔍 PR Diff Content:"
+          cat pr_diff.txt || echo "⚠️ No changes detected in diff!"
 
       - name: Call OpenAI for Review
         id: ai_review
@@ -26,16 +31,26 @@ jobs:
             -d '{
               "model": "gpt-4",
               "messages": [
-                {"role": "system", "content": "You are an AI code reviewer. Analyze the given code diff and provide review comments with suggestions for improvement."},
-                {"role": "user", "content": "Review this code diff and suggest improvements:\n'"$(cat pr_diff.txt)"'"}
+                {"role": "system", "content": "You are an AI code reviewer. Provide a detailed review of the following code diff."},
+                {"role": "user", "content": "Review this code diff:\n'"$(cat pr_diff.txt)"'"}
               ]
-            }' | jq -r '.choices[0].message.content')
+            }')
 
-          echo "$RESPONSE" > review_comment.txt
-          echo "::set-output name=review::$RESPONSE"
+          echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
 
-      - name: Post AI Review Comment
-        uses: peter-evans/create-or-update-comment@v3
+          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
+
+          if [ -z "$REVIEW_COMMENT" ] || [ "$REVIEW_COMMENT" = "null" ]; then
+            REVIEW_COMMENT="🤖 AI Review: No comments were generated. Please check the input."
+          fi
+
+          echo "$REVIEW_COMMENT" > review_comment.txt
+          echo "::set-output name=review::$REVIEW_COMMENT"
+
+      - name: Post AI Review as PR Comment
+        uses: thollander/actions-comment-pull-request@v2
         with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: "${{ steps.ai_review.outputs.review }}"
+          message: |
+            **🤖 AI Code Review:**
+            ${{ steps.ai_review.outputs.review }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
