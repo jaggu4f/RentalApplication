@@ -1,12 +1,19 @@
-name: Lint Code
-on: [pull_request]
+name: Snyk Security Scan
+
+on:
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
-  lint:
+  security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Run ESLint
-        run: |
-          npm install eslint
-          npx eslint . --format compact
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/cli@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: test
