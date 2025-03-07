@@ -25,48 +25,27 @@ jobs:
       - name: Call OpenAI for Review
         id: ai_review
         run: |
-    # Ensure pr_diff.txt exists and is not empty
-      if [ ! -f pr_diff.txt ] || [ ! -s pr_diff.txt ]; then
-      echo "⚠️ No code changes detected in PR or pr_diff.txt is missing. Skipping AI review." > review_comment.txt
-      echo "::set-output name=review::⚠️ No code changes detected in PR or file missing. Skipping AI review."
-      exit 0
-    fi
+          RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
+            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "model": "gpt-4",
+              "messages": [
+                {"role": "system", "content": "You are an AI code reviewer. Provide a detailed review of the following code diff."},
+                {"role": "user", "content": "Review this code diff:\n'"$(cat pr_diff.txt)"'"}
+              ]
+            }')
 
-    # Read and JSON-escape the PR diff
-    DIFF_CONTENT=$(jq -Rs . < pr_diff.txt || echo "\"(Error reading diff)\"")
+          echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
 
-    # Construct the JSON payload safely
-    cat <<EOF > request.json
-    {
-      "model": "gpt-4",
-      "messages": [
-        { "role": "system", "content": "You are an expert code reviewer. Analyze the given code diff and provide constructive feedback." },
-        { "role": "user", "content": "Here is the code diff:\n$DIFF_CONTENT\nPlease review and provide comments." }
-      ]
-    }
-    EOF
+          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
 
-    # 🔍 Debugging: Print the full JSON payload before sending it
-    echo "🔍 JSON Payload (Raw):"
-    cat request.json
+          if [ -z "$REVIEW_COMMENT" ] || [ "$REVIEW_COMMENT" = "null" ]; then
+            REVIEW_COMMENT="🤖 AI Review: No comments were generated. Please check the input."
+          fi
 
-    # Call OpenAI API
-    RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
-      -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-      -H "Content-Type: application/json" \
-      -d @request.json)
-
-    echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
-
-    REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content' || echo "⚠️ Error parsing AI response.")
-
-    if [ -z "$REVIEW_COMMENT" ] || [ "$REVIEW_COMMENT" = "null" ]; then
-      REVIEW_COMMENT="🤖 AI Review: No comments were generated. Please check the input or refine the prompt."
-    fi
-
-    echo "$REVIEW_COMMENT" > review_comment.txt
-    echo "::set-output name=review::$REVIEW_COMMENT"
-
+          echo "$REVIEW_COMMENT" > review_comment.txt
+          echo "::set-output name=review::$REVIEW_COMMENT"
 
       - name: Post AI Review as PR Comment
         uses: thollander/actions-comment-pull-request@v2
