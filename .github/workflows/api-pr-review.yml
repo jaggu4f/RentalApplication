@@ -23,32 +23,29 @@ jobs:
           cat pr_diff.txt || echo "⚠️ No changes detected in diff!"
 
       - name: Call OpenAI for Review
-      id: ai_review
-      run: |
-      DIFF_CONTENT=$(cat pr_diff.txt | jq -Rs .) # Convert text to valid JSON string
+        id: ai_review
+        run: |
+          RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
+            -H "Authorization: Bearer ${{ secrets.MYFIRSTAPIKEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "model": "gpt-4",
+              "messages": [
+                {"role": "system", "content": "You are an AI code reviewer. Provide a detailed review of the following code diff."},
+                {"role": "user", "content": "Review this code diff:\n'"$(cat pr_diff.txt)"'"}
+              ]
+            }')
 
-    RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
-      -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-      -H "Content-Type: application/json" \
-      -d "{
-        \"model\": \"gpt-4\",
-        \"messages\": [
-          {\"role\": \"system\", \"content\": \"You are an expert code reviewer. Analyze the given code diff and provide constructive feedback, highlighting potential issues, improvements, and best practices.\"},
-          {\"role\": \"user\", \"content\": \"Here is the code diff:\n${DIFF_CONTENT} Please review and provide comments.\"}
-        ]
-      }")
+          echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
 
-    echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
+          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
 
-    REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
+          if [ -z "$REVIEW_COMMENT" ] || [ "$REVIEW_COMMENT" = "null" ]; then
+            REVIEW_COMMENT="🤖 AI Review: No comments were generated. Please check the input."
+          fi
 
-    if [ -z "$REVIEW_COMMENT" ] || [ "$REVIEW_COMMENT" = "null" ]; then
-      REVIEW_COMMENT="🤖 AI Review: No comments were generated. Please check the input or refine the prompt."
-    fi
-
-    echo "$REVIEW_COMMENT" > review_comment.txt
-    echo "::set-output name=review::$REVIEW_COMMENT"
-
+          echo "$REVIEW_COMMENT" > review_comment.txt
+          echo "::set-output name=review::$REVIEW_COMMENT"
 
       - name: Post AI Review as PR Comment
         uses: thollander/actions-comment-pull-request@v2
