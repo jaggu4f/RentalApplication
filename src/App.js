@@ -3,6 +3,7 @@ import logo from './logo.svg';
 import './App.css';
 import Dashboard from './components/Dashboard'
 function App() {
+  let data = 'test'
   return (
         
               <Dashboard />
