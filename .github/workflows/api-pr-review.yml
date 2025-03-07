@@ -37,7 +37,7 @@ jobs:
 
           # Construct the JSON payload safely using jq
           JSON_PAYLOAD=$(jq -n --arg diff "$DIFF_CONTENT" '{
-            "model": "GPT-3.5",
+            "model": "gpt-3.5-turbo-instruct-0914",
             "messages": [
               { "role": "system", "content": "You are an expert code reviewer. Analyze the given code diff and provide constructive feedback." },
               { "role": "user", "content": ("Here is the code diff:\n" + $diff + "\nPlease review and provide comments.") }
