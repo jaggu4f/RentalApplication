@@ -26,7 +26,7 @@ jobs:
         id: ai_review
         run: |
           RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
-            -H "Authorization: Bearer ${{ secrets.MYFIRSTAPIKEY }}" \
+            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d '{
               "model": "gpt-4",
