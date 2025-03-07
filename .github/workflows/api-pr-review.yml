@@ -31,8 +31,7 @@ jobs:
             -d 'data = {
               "model": "gpt-4",
               "messages": [
-                {"role": "system", "content": "You are an AI code reviewer. Provide a detailed review of the following code diff."},
-                {"role": "user", "content": "Review this code diff:\n'"$(cat pr_diff.txt)"'"}
+                {"role": "user", "content": "Where was it played?"}
               ]
             }')
 
