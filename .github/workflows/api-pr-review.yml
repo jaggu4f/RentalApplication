@@ -31,7 +31,7 @@ jobs:
               ]
             }' | jq -r '.choices[0].message.content')
 
-          echo "$RESPONSE" > review_comment.txt
+          echo "$RESPONSE" > "review_comment.txt"
           echo "::set-output name=review::$RESPONSE"
 
       - name: Post AI Review Comment
