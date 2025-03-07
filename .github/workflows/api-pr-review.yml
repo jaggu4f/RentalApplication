@@ -1,25 +1,5 @@
-name: AI PR Review
-
-on:
-  pull_request:
-    types: [opened, synchronize]
-
-jobs:
-  ai_review:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Get PR Diff
-        run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git diff origin/${{ github.event.pull_request.base.ref }} > pr_diff.txt
-
-      - name: Debug OpenAI API Response
-        id: ai_review
-        run: |
+- name: Debug OpenAI API Response
+  run: |
     RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
       -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
       -H "Content-Type: application/json" \
@@ -32,9 +12,3 @@ jobs:
       }')
 
     echo "🔍 OpenAI Full Response: $RESPONSE"
-
-      - name: Post AI Review Comment
-        uses: peter-evans/create-or-update-comment@v3
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: "${{ steps.ai_review.outputs.review }}"
