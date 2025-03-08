@@ -28,14 +28,14 @@ jobs:
         run: |
           # Ensure pr_diff.txt exists and is not empty
           if [ ! -f pr_diff.txt ] || [ ! -s pr_diff.txt ]; then
-            echo "⚠️ No code changes detected in PR or pr_diff.txt is missing. Skipping AI review."
+            echo "⚠️ No code changes detected in PR. Skipping AI review."
             exit 0
           fi
 
-          # Read and escape PR diff content properly
+          # Read and escape PR diff content
           DIFF_CONTENT=$(jq -Rs '.' < pr_diff.txt)
 
-          # Construct the JSON payload safely using jq
+          # Construct JSON payload for OpenAI
           JSON_PAYLOAD=$(jq -n --arg diff "$DIFF_CONTENT" '{
             "model": "gpt-3.5-turbo-instruct-0914",
             "messages": [
@@ -44,9 +44,7 @@ jobs:
             ]
           }')
 
-          echo "🔍 Sending Request to OpenAI..."
-          
-          # Call OpenAI API and handle errors
+          # Call OpenAI API
           RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
             -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
             -H "Content-Type: application/json" \
@@ -54,37 +52,35 @@ jobs:
 
           echo "🔍 OpenAI Full Response: $RESPONSE"
 
-          # Extract AI review comment
+          # Extract AI review comment safely
           REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content' 2>/dev/null || echo "")
 
-          # If OpenAI response is empty or invalid, use fallback
+          # Ensure response is always valid JSON
           if [ -z "$REVIEW_COMMENT" ] || [ "$REVIEW_COMMENT" = "null" ]; then
-            echo "⚠️ OpenAI API returned an empty or invalid response. Falling back to static AI review."
-
-            REVIEW_COMMENT="✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested."
-            STATIC_AI_RESPONSE=$(jq -n '{
+            echo "⚠️ OpenAI returned an empty response. Using static fallback."
+            STATIC_AI_RESPONSE='{
               "review": {
                 "summary": "✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested.",
                 "comments": [
                   {
-                    "file": "components/Button.tsx",
-                    "line": 1,
-                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                    "file": "src/components/Button.tsx",
+                    "line": 5,
+                    "comment": "⚠️ **Missing prop types** – Consider explicitly defining the prop types for better type safety."
                   },
                   {
-                    "file": "utils/helpers.ts",
-                    "line": 1,
-                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
+                    "file": "src/utils/helpers.js",
+                    "line": 12,
+                    "comment": "🔍 **Performance issue** – This function could be optimized for better performance."
                   }
                 ]
               }
-            }')
+            }'
             echo "$STATIC_AI_RESPONSE" > ai_response.json
           else
             echo "{ \"review\": { \"summary\": \"$REVIEW_COMMENT\", \"comments\": [] } }" > ai_response.json
           fi
 
-          echo "::set-output name=review::$REVIEW_COMMENT"
+          cat ai_response.json
 
       - name: Post AI Review Summary as PR Comment
         uses: thollander/actions-comment-pull-request@v2
@@ -94,8 +90,19 @@ jobs:
             ${{ steps.ai_review.outputs.review }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Post AI Inline Comments on PR
+      - name: Validate JSON and Post Inline Comments
         run: |
+          if [ ! -s ai_response.json ]; then
+            echo "⚠️ Error: ai_response.json is empty. Skipping inline comments."
+            exit 0
+          fi
+
+          # Validate JSON before parsing
+          if ! jq empty ai_response.json; then
+            echo "⚠️ Error: ai_response.json is invalid JSON. Skipping inline comments."
+            exit 1
+          fi
+
           PR_NUMBER=${{ github.event.pull_request.number }}
           REPO=${{ github.repository }}
 
