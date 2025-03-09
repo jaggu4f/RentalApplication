@@ -64,36 +64,22 @@ jobs:
 
             # Define static AI response as a fallback
             REVIEW_COMMENT="✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested."
-            REVIEW_INLINE_COMMENT='[{
-                    "file": "../../src/components/Button.tsx",
-                    "line": 1,
-                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                  },
-                  {
-                    "file": "../../src/helpers.ts",
-                    "line": 1,
-                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
-                  }]'
-            STATIC_AI_RESPONSE=$(jq -n '{
-              "review": {
-                "summary": "✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested.",
-                "comments": [
-                  {
-                    "file": "../../src/components/Button.tsx",
-                    "line": 1,
-                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                  },
-                  {
-                    "file": "../../src/helpers.ts",
-                    "line": 1,
-                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
-                  }
-                ]
+            REVIEW_INLINE_COMMENT=$(jq -n '[
+              {
+                "file": "src/components/Button.tsx",
+                "line": 1,
+                "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+              },
+              {
+                "file": "src/helpers.ts",
+                "line": 1,
+                "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
               }
-            }')
-            echo "$STATIC_AI_RESPONSE" > ai_response.json
+            ]')
+
+            echo "$REVIEW_INLINE_COMMENT" > inline_comments.json
           else
-            echo "{ \"review\": { \"summary\": \"$REVIEW_COMMENT\", \"comments\": \"$REVIEW_INLINE_COMMENT\" } }" > ai_response.json
+            echo "$REVIEW_COMMENT" > review_summary.txt
           fi
 
           echo "::set-output name=review::$REVIEW_COMMENT"
@@ -102,6 +88,25 @@ jobs:
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            **🤖 AI Code Review:**
+            **🤖 AI Code Review Summary:**
             ${{ steps.ai_review.outputs.review }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Post AI Inline Comments
+        env:
+          GH_TOKEN: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -f inline_comments.json ]; then
+            echo "📌 Posting inline comments..."
+            COMMENTS=$(cat inline_comments.json | jq -c '.[]')
+
+            for COMMENT in $COMMENTS; do
+              FILE=$(echo "$COMMENT" | jq -r '.file')
+              LINE=$(echo "$COMMENT" | jq -r '.line')
+              TEXT=$(echo "$COMMENT" | jq -r '.comment')
+
+              gh pr review ${{ github.event.pull_request.number }} --comment --body "$TEXT" --file "$FILE" --line "$LINE"
+            done
+          else
+            echo "✅ No inline comments to post."
+          fi
