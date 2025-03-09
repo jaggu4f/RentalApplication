@@ -64,6 +64,16 @@ jobs:
 
             # Define static AI response as a fallback
             REVIEW_COMMENT="✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested."
+            REVIEW_INLINE_COMMENT='[{
+                    "file": "../../src/components/Button.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  },
+                  {
+                    "file": "../../src/helpers.ts",
+                    "line": 1,
+                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
+                  }]'
             STATIC_AI_RESPONSE=$(jq -n '{
               "review": {
                 "summary": "✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested.",
@@ -83,18 +93,7 @@ jobs:
             }')
             echo "$STATIC_AI_RESPONSE" > ai_response.json
           else
-            echo "{ \"review\": { \"summary\": \"$REVIEW_COMMENT\", \"comments\": [
-            {
-                    "file": "../../src/components/Button.tsx",
-                    "line": 1,
-                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                  },
-                  {
-                    "file": "../../src/helpers.ts",
-                    "line": 1,
-                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
-                  }
-            ] } }" > ai_response.json
+            echo "{ \"review\": { \"summary\": \"$REVIEW_COMMENT\", \"comments\": \"$REVIEW_INLINE_COMMENT\" } }" > ai_response.json
           fi
 
           echo "::set-output name=review::$REVIEW_COMMENT"
