@@ -1,0 +1,17 @@
+name: Codacy Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  codacy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Codacy Analysis
+        uses: codacy/codacy-analysis-cli-action@v4
+        with:
+          api-token: ${{ secrets.CODACY_API_TOKEN }}
