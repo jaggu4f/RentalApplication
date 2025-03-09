@@ -64,7 +64,7 @@ jobs:
 
             # Define static AI response as a fallback
             REVIEW_COMMENT="✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested."
-            REVIEW_INLINE_COMMENT=$(jq -n '[
+            REVIEW_INLINE_COMMENT=$(cat <<EOF[
               {
                 "file": "src/components/Button.tsx",
                 "line": 1,
@@ -75,8 +75,7 @@ jobs:
                 "line": 1,
                 "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
               }
-            ]')
-
+            ]EOF)
             echo "$REVIEW_INLINE_COMMENT" > inline_comments.json
           else
             echo "$REVIEW_COMMENT" > review_summary.txt
@@ -96,9 +95,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -f inline_comments.json ]; then
-            echo "📌 Posting inline comments..."
-            COMMENTS=$(cat inline_comments.json | jq -c '.[]')
+          if [ -f inline_comments.json ] && [ -s inline_comments.json ]; then
+            cat inline_comments.json  # Debug JSON content
+            COMMENTS=$(jq -c '.[]' inline_comments.json)
 
             for COMMENT in $COMMENTS; do
               FILE=$(echo "$COMMENT" | jq -r '.file')
