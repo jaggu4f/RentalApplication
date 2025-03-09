@@ -49,10 +49,26 @@ jobs:
           echo "$JSON_PAYLOAD" | jq .
 
           # Call OpenAI API
-          RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
-            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d "$JSON_PAYLOAD")
+          RESPONSE=RESPONSE=$(cat <<'EOF'
+            {
+              "review": {
+                "summary": "✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested.",
+                "comments": [
+                  {
+                    "file": "src/components/Button.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  },
+                  {
+                    "file": "src/helpers.ts",
+                    "line": 1,
+                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
+                  }
+                ]
+              }
+            }
+            EOF
+            )
 
           echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
           
