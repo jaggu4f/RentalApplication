@@ -32,72 +32,51 @@ jobs:
             exit 0
           fi
 
-          # Read and escape PR diff content properly
-          DIFF_CONTENT=$(jq -Rs '.' < pr_diff.txt)
-
-          # Construct the JSON payload safely using jq
-          JSON_PAYLOAD=$(jq -n --arg diff "$DIFF_CONTENT" '{
-            "model": "gpt-3.5-turbo-instruct-0914",
-            "messages": [
-              { "role": "system", "content": "You are an expert code reviewer. Analyze the given code diff and provide constructive feedback." },
-              { "role": "user", "content": ("Here is the code diff:\n" + $diff + "\nPlease review and provide comments.") }
-            ]
-          }')
-
-          # 🔍 Debugging: Print the full JSON payload before sending it
-          echo "🔍 JSON Payload (Formatted):"
-          echo "$JSON_PAYLOAD" | jq .
-
-          # Call OpenAI API
-          RESPONSE=RESPONSE=$(cat <<'EOF'
-            {
-              "review": {
-                "summary": "✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested.",
-                "comments": [
-                  {
-                    "file": "src/components/Button.tsx",
-                    "line": 1,
-                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                  },
-                  {
-                    "file": "src/helpers.ts",
-                    "line": 1,
-                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
-                  }
-                ]
-              }
+          # Static AI Review Inline Comments
+          RESPONSE=$(cat <<'EOF'
+          {
+            "review": {
+              "summary": "✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested.",
+              "comments": [
+                {
+                  "file": "src/components/Button.tsx",
+                  "line": 1,
+                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                },
+                {
+                  "file": "src/helpers.ts",
+                  "line": 1,
+                  "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
+                }
+              ]
             }
-            EOF
-            )
+          }
+          EOF
+          )
 
           echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
           
           # Extract the review comment from OpenAI's response
-          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content' || echo "⚠️ Error parsing AI response.")
+          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.review.summary' || echo "⚠️ Error parsing AI response.")
 
-          if [ -z "$REVIEW_COMMENT" ] || [ "$REVIEW_COMMENT" = "null" ]; then
-            echo "⚠️ OpenAI API returned an empty or invalid response. Falling back to static AI review."
+          # Assign static inline comments
+          REVIEW_INLINE_COMMENT=$(cat <<'EOF'
+          [
+            {
+              "file": "src/components/Button.tsx",
+              "line": 1,
+              "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+            },
+            {
+              "file": "src/helpers.ts",
+              "line": 1,
+              "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
+            }
+          ]
+          EOF
+          )
 
-            # Define static AI response as a fallback
-            REVIEW_COMMENT="✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested."
-            REVIEW_INLINE_COMMENT=$(cat <<EOF[
-              {
-                "file": "src/components/Button.tsx",
-                "line": 1,
-                "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-              },
-              {
-                "file": "src/helpers.ts",
-                "line": 1,
-                "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
-              }
-            ]
-            'EOF'
-            )
-            echo "$REVIEW_INLINE_COMMENT" > inline_comments.json
-          else
-            echo "$REVIEW_COMMENT" > review_summary.txt
-          fi
+          echo "$REVIEW_INLINE_COMMENT" > inline_comments.json
 
           echo "::set-output name=review::$REVIEW_COMMENT"
 
