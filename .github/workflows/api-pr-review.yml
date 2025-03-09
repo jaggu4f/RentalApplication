@@ -98,7 +98,7 @@ jobs:
           fi
 
           # Validate JSON
-          if ! jq empty inline_comments.json; then
+          if ! jq . inline_comments.json > /dev/null 2>&1; then
             echo "⚠️ Invalid JSON in inline_comments.json!"
             cat inline_comments.json
             exit 1
