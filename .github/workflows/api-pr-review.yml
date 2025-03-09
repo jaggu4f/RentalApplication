@@ -88,21 +88,30 @@ jobs:
             ${{ steps.ai_review.outputs.review }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Post AI Inline Comments
+            - name: Post AI Inline Comments
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -f inline_comments.json ] && [ -s inline_comments.json ]; then
-            cat inline_comments.json  # Debug JSON content
-            COMMENTS=$(jq -c '.[]' inline_comments.json)
-
-            for COMMENT in $COMMENTS; do
-              FILE=$(echo "$COMMENT" | jq -r '.file')
-              LINE=$(echo "$COMMENT" | jq -r '.line')
-              TEXT=$(echo "$COMMENT" | jq -r '.comment')
-
-              gh pr review ${{ github.event.pull_request.number }} --comment --body "$TEXT" --file "$FILE" --line "$LINE"
-            done
-          else
+          if [ ! -f inline_comments.json ] || [ ! -s inline_comments.json ]; then
             echo "✅ No inline comments to post."
+            exit 0
           fi
+
+          # Validate JSON
+          if ! jq empty inline_comments.json; then
+            echo "⚠️ Invalid JSON in inline_comments.json!"
+            cat inline_comments.json
+            exit 1
+          fi
+
+          cat inline_comments.json  # Debug JSON content
+          COMMENTS=$(jq -c '.[]' inline_comments.json)
+
+          for COMMENT in $COMMENTS; do
+            FILE=$(echo "$COMMENT" | jq -r '.file')
+            LINE=$(echo "$COMMENT" | jq -r '.line')
+            TEXT=$(echo "$COMMENT" | jq -r '.comment')
+
+            gh pr review ${{ github.event.pull_request.number }} --comment --body "$TEXT" --file "$FILE" --line "$LINE"
+          done
+
