@@ -103,6 +103,11 @@ jobs:
           LINE=$(echo "$COMMENT" | jq -r '.line')
           TEXT=$(echo "$COMMENT" | jq -r '.comment')
         
-          gh pr review ${{ github.event.pull_request.number }} --comment --body "$TEXT" --file "$FILE" --line "$LINE"
+          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+          -X POST \
+          -F "body=$TEXT" \
+          -F "commit_id=$(git rev-parse HEAD)" \
+          -F "path=$FILE" \
+          -F "line=$LINE"
           done < <(jq -c '.[]' inline_comments.json)
           
