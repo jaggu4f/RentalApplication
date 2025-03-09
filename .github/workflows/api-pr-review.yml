@@ -44,23 +44,25 @@ jobs:
             ]
           }')
 
-          echo "🔍 Sending Request to OpenAI..."
-          
-          # Call OpenAI API and handle errors
+          # 🔍 Debugging: Print the full JSON payload before sending it
+          echo "🔍 JSON Payload (Formatted):"
+          echo "$JSON_PAYLOAD" | jq .
+
+          # Call OpenAI API
           RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
             -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
             -H "Content-Type: application/json" \
-            -d "$JSON_PAYLOAD") || RESPONSE=""
+            -d "$JSON_PAYLOAD")
 
-          echo "🔍 OpenAI Full Response: $RESPONSE"
+          echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
+          
+          # Extract the review comment from OpenAI's response
+          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content' || echo "⚠️ Error parsing AI response.")
 
-          # Extract AI review comment
-          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content' 2>/dev/null || echo "")
-
-          # If OpenAI response is empty or invalid, use fallback
           if [ -z "$REVIEW_COMMENT" ] || [ "$REVIEW_COMMENT" = "null" ]; then
             echo "⚠️ OpenAI API returned an empty or invalid response. Falling back to static AI review."
 
+            # Define static AI response as a fallback
             REVIEW_COMMENT="✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested."
             STATIC_AI_RESPONSE=$(jq -n '{
               "review": {
@@ -86,34 +88,10 @@ jobs:
 
           echo "::set-output name=review::$REVIEW_COMMENT"
 
-      - name: Post AI Review Summary as PR Comment
+      - name: Post AI Review as PR Comment
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            **🤖 AI Code Review Summary:**
+            **🤖 AI Code Review:**
             ${{ steps.ai_review.outputs.review }}
-          GITHUB_TOKEN: ${{ secrets.OPENAI_API_KEY }}
-
-      - name: Post AI Inline Comments on PR
-        run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          REPO=${{ github.repository }}
-
-          COMMENTS=$(jq -c '.review.comments[]' ai_response.json)
-          for comment in $COMMENTS; do
-            FILE=$(echo "$comment" | jq -r '.file')
-            LINE=$(echo "$comment" | jq -r '.line')
-            BODY=$(echo "$comment" | jq -r '.comment')
-
-            echo "Posting inline comment on $FILE:$LINE..."
-            gh api repos/$REPO/pulls/$PR_NUMBER/comments \
-              -X POST \
-              -H "Authorization: token ${{ secrets.OPENAI_API_KEY }}" \
-              -H "Content-Type: application/json" \
-              -f body="$BODY" \
-              -f path="$FILE" \
-              -f line="$LINE" \
-              -f side="RIGHT"
-          done
-        env:
           GITHUB_TOKEN: ${{ secrets.OPENAI_API_KEY }}
