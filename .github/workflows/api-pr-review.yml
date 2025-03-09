@@ -55,8 +55,8 @@ jobs:
             echo "Using mock response..."
             AI_COMMENTS='[
               {
-                "file": "src/example.js",
-                "line": 12,
+                "file": "src/components/Button.tsx",
+                "line": 1,
                 "comment": "Consider renaming this variable for better readability."
               }
             ]'
