@@ -91,7 +91,9 @@ jobs:
                 "line": 1,
                 "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
               }
-            ]EOF)
+            ]
+            'EOF'
+            )
             echo "$REVIEW_INLINE_COMMENT" > inline_comments.json
           else
             echo "$REVIEW_COMMENT" > review_summary.txt
