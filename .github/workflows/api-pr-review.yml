@@ -14,13 +14,13 @@ jobs:
 
       - name: Get PR Diff
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.OPENAI_API_KEY }}
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           REPO=${{ github.repository }}
 
           # Get PR diff
-          DIFF=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          DIFF=$(curl -s -H "Authorization: token $OPENAI_API_KEY" \
                  "https://api.github.com/repos/$REPO/pulls/$PR_NUMBER.diff")
 
           echo "$DIFF" > pr_diff.patch
