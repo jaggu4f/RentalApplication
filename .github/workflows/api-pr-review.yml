@@ -96,14 +96,7 @@ jobs:
             echo "✅ No inline comments to post."
             exit 0
           fi
-
-          # Validate JSON
-          if ! jq . inline_comments.json > /dev/null 2>&1; then
-            echo "⚠️ Invalid JSON in inline_comments.json!"
-            cat inline_comments.json
-            exit 1
-          fi
-
+          
           cat inline_comments.json  # Debug JSON content
           COMMENTS=$(jq -c '.[]' inline_comments.json)
 
