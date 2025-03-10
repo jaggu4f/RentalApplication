@@ -39,6 +39,11 @@ jobs:
               "summary": "✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested.",
               "comments": [
                   {
+                    "file": "src/components/Button.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  },
+                  {
                     "file": "src/components/ButtonCancel.tsx",
                     "line": 1,
                     "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
@@ -57,6 +62,11 @@ jobs:
           # Assign static inline comments
           REVIEW_INLINE_COMMENT=$(cat <<'EOF'
           [
+              {
+                  "file": "src/components/Button.tsx",
+                  "line": 1,
+                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                },
                 {
                     "file": "src/components/ButtonCancel.tsx",
                     "line": 1,
@@ -88,26 +98,28 @@ jobs:
           fi
           
           cat inline_comments.json  # Debug JSON content
-          while IFS= read -r COMMENT; do
+          jq -c '.[]' inline_comments.json | while IFS= read -r COMMENT; do
           FILE=$(echo "$COMMENT" | jq -r '.file')
           LINE=$(echo "$COMMENT" | jq -r '.line')
           TEXT=$(echo "$COMMENT" | jq -r '.comment')
-
+        
           echo "🔍 Debug Info:"
           echo "📄 File: $FILE"
           echo "📌 Line: $LINE"
           echo "💬 Comment: $TEXT"
-          # Ensure no empty values before calling GitHub API
+        
+          # Ensure values are not empty
           if [[ -z "$FILE" || -z "$LINE" || -z "$TEXT" ]]; then
             echo "❌ Skipping due to missing values!"
             continue
           fi
+        
           gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
-          -X POST \
-          -F "body=$TEXT" \
-          -F "commit_id=${{ github.event.pull_request.head.sha }}" \
-          -F "path=$FILE" \
-          -F "line=$LINE" || echo "❌ Failed to post comment on $FILE"
-          -F "side=RIGHT"
-          echo "GitHub API Response: $RESPONSE"
-          done <<< "$(jq -c '.[]' inline_comments.json)"
+            -X POST \
+            -F "body=$TEXT" \
+            -F "commit_id=${{ github.event.pull_request.head.sha }}" \
+            -F "path=$FILE" \
+            -F "line=$LINE"
+        
+          sleep 2  # Prevent rate limits
+          done
