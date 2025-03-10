@@ -103,16 +103,16 @@ jobs:
           LINE=$(echo "$COMMENT" | jq -r '.line')
           TEXT=$(echo "$COMMENT" | jq -r '.comment')
         
-          echo "🔍 Debug Info:"
-          echo "📄 File: $FILE"
-          echo "📌 Line: $LINE"
-          echo "💬 Comment: $TEXT"
+          echo "🔍 Checking file: $FILE at line: $LINE"
         
-          # Ensure values are not empty
-          if [[ -z "$FILE" || -z "$LINE" || -z "$TEXT" ]]; then
-            echo "❌ Skipping due to missing values!"
+          # Check if this exact comment already exists
+          if echo "$EXISTING_COMMENTS" | jq -e --arg file "$FILE" --argjson line "$LINE" --arg text "$TEXT" \
+            '.[] | select(.path == $file and .line == $line and .body == $text)' > /dev/null; then
+            echo "✅ Comment already exists, skipping..."
             continue
           fi
+        
+          echo "💬 Posting new comment..."
         
           gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
             -X POST \
