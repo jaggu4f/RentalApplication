@@ -102,8 +102,4 @@ jobs:
           FILE=$(echo "$COMMENT" | jq -r '.file')
           LINE=$(echo "$COMMENT" | jq -r '.line')
           TEXT=$(echo "$COMMENT" | jq -r '.comment')
-        
-          
-
-      
           
