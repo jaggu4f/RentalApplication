@@ -95,7 +95,8 @@ jobs:
           gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
           -X POST \
           -F "body=$TEXT" \
-          -F "commit_id=$(git rev-parse HEAD)" \
+          -F "commit_id=${{ github.event.pull_request.head.sha }}" \
           -F "path=$FILE" \
           -F "line=$LINE"
-          done < <(jq -c '.[]' inline_comments.json)
+          -F "side=RIGHT"
+          echo "GitHub API Response: $RESPONSE"
