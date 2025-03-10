@@ -96,31 +96,34 @@ jobs:
             echo "✅ No inline comments to post."
             exit 0
           fi
-          
+
+          # Fetch existing PR comments
+          EXISTING_COMMENTS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
+
           cat inline_comments.json  # Debug JSON content
           jq -c '.[]' inline_comments.json | while IFS= read -r COMMENT; do
-          FILE=$(echo "$COMMENT" | jq -r '.file')
-          LINE=$(echo "$COMMENT" | jq -r '.line')
-          TEXT=$(echo "$COMMENT" | jq -r '.comment')
-        
-          echo "🔍 Checking file: $FILE at line: $LINE"
-        
-          # Check if this exact comment already exists
-          if echo "$EXISTING_COMMENTS" | jq -e --arg file "$FILE" --argjson line "$LINE" --arg text "$TEXT" \
-            '.[] | select(.path == $file and .line == $line and .body == $text)' > /dev/null; then
-            echo "✅ Comment already exists, skipping..."
-            continue
-          fi
-        
-          echo "💬 Posting new comment..."
-        
-          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
-            -X POST \
-            -F "body=$TEXT" \
-            -F "commit_id=${{ github.event.pull_request.head.sha }}" \
-            -F "path=$FILE" \
-            -F "line=$LINE"
-        
-          sleep 2  # Prevent rate limits
+            FILE=$(echo "$COMMENT" | jq -r '.file')
+            LINE=$(echo "$COMMENT" | jq -r '.line')
+            TEXT=$(echo "$COMMENT" | jq -r '.comment')
+
+            echo "🔍 Checking file: $FILE at line: $LINE"
+
+            # Check if this exact comment already exists
+            if echo "$EXISTING_COMMENTS" | jq -e --arg file "$FILE" --argjson line "$LINE" --arg text "$TEXT" \
+              '.[] | select(.path == $file and .line == $line and .body == $text)' > /dev/null; then
+              echo "✅ Comment already exists, skipping..."
+              continue
+            fi
+
+            echo "💬 Posting new comment..."
+
+            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+              -X POST \
+              -F "body=$TEXT" \
+              -F "commit_id=${{ github.event.pull_request.head.sha }}" \
+              -F "path=$FILE" \
+              -F "line=$LINE"
+
+            sleep 2  # Prevent rate limits
           done
           
