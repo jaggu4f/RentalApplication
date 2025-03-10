@@ -126,4 +126,23 @@ jobs:
 
             sleep 2  # Prevent rate limits
           done
+      - name: Check Unresolved Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Fetch all review comments
+          COMMENTS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
+  
+          # Count unresolved comments
+          UNRESOLVED_COUNT=$(echo "$COMMENTS" | jq '[.[] | select(.resolved == false)] | length')
+  
+          echo "🔍 Unresolved Comments: $UNRESOLVED_COUNT"
+  
+          # Fail workflow if unresolved comments exist
+          if [ "$UNRESOLVED_COUNT" -gt 0 ]; then
+            echo "❌ PR has unresolved comments. Please resolve them before merging."
+            exit 1
+          fi
+  
+          echo "✅ No unresolved comments found!"
           
