@@ -100,3 +100,4 @@ jobs:
           -F "line=$LINE"
           -F "side=RIGHT"
           echo "GitHub API Response: $RESPONSE"
+          done <<< "$(jq -c '.[]' inline_comments.json)"
