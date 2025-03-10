@@ -2,7 +2,7 @@ name: AI PR Review
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, edited, reopened, ready_for_review]
 
 jobs:
   ai_review:
@@ -32,44 +32,117 @@ jobs:
             exit 0
           fi
 
-          # Read and escape PR diff content properly
-          DIFF_CONTENT=$(jq -Rs '.' < pr_diff.txt)
-
-          # Construct the JSON payload safely using jq
-          JSON_PAYLOAD=$(jq -n --arg diff "$DIFF_CONTENT" '{
-            "model": "gpt-3.5-turbo-instruct-0914",
-            "messages": [
-              { "role": "system", "content": "You are an expert code reviewer. Analyze the given code diff and provide constructive feedback." },
-              { "role": "user", "content": ("Here is the code diff:\n" + $diff + "\nPlease review and provide comments.") }
-            ]
-          }')
-
-          # 🔍 Debugging: Print the full JSON payload before sending it
-          echo "🔍 JSON Payload (Formatted):"
-          echo "$JSON_PAYLOAD" | jq .
-
-          # Call OpenAI API
-          RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
-            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d "$JSON_PAYLOAD")
+          # Static AI Review Inline Comments
+          RESPONSE=$(cat <<'EOF'
+          {
+            "review": {
+              "summary": "✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested.",
+              "comments": [
+                  {
+                    "file": "src/components/Button.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  },
+                  {
+                    "file": "src/components/ButtonCancel.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  }
+                ]
+            }
+          }
+          EOF
+          )
 
           echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
           
           # Extract the review comment from OpenAI's response
-          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content' || echo "⚠️ Error parsing AI response.")
+          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.review.summary' || echo "⚠️ Error parsing AI response.")
 
-          if [ -z "$REVIEW_COMMENT" ] || [ "$REVIEW_COMMENT" = "null" ]; then
-            REVIEW_COMMENT="🤖 AI Review: No comments were generated. Please check the input or refine the prompt."
-          fi
+          # Assign static inline comments
+          REVIEW_INLINE_COMMENT=$(cat <<'EOF'
+          [
+              {
+                  "file": "src/components/Button.tsx",
+                  "line": 1,
+                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                },
+                {
+                    "file": "src/components/ButtonCancel.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  }
+                ]
+          EOF
+          )
 
-          echo "$REVIEW_COMMENT" > review_comment.txt
+          echo "$REVIEW_INLINE_COMMENT" > inline_comments.json
+
           echo "::set-output name=review::$REVIEW_COMMENT"
 
       - name: Post AI Review as PR Comment
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            **🤖 AI Code Review:**
+            **🤖 AI Code Review Summary:**
             ${{ steps.ai_review.outputs.review }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post AI Inline Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f inline_comments.json ] || [ ! -s inline_comments.json ]; then
+            echo "✅ No inline comments to post."
+            exit 0
+          fi
+
+          # Fetch existing PR comments
+          EXISTING_COMMENTS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
+
+          cat inline_comments.json  # Debug JSON content
+          jq -c '.[]' inline_comments.json | while IFS= read -r COMMENT; do
+            FILE=$(echo "$COMMENT" | jq -r '.file')
+            LINE=$(echo "$COMMENT" | jq -r '.line')
+            TEXT=$(echo "$COMMENT" | jq -r '.comment')
+
+            echo "🔍 Checking file: $FILE at line: $LINE"
+
+            # Check if this exact comment already exists
+            if echo "$EXISTING_COMMENTS" | jq -e --arg file "$FILE" --argjson line "$LINE" --arg text "$TEXT" \
+              '.[] | select(.path == $file and .line == $line and .body == $text)' > /dev/null; then
+              echo "✅ Comment already exists, skipping..."
+              continue
+            fi
+
+            echo "💬 Posting new comment..."
+
+            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+              -X POST \
+              -F "body=$TEXT" \
+              -F "commit_id=${{ github.event.pull_request.head.sha }}" \
+              -F "path=$FILE" \
+              -F "line=$LINE"
+
+            sleep 2  # Prevent rate limits
+          done
+      - name: Check Unresolved Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Fetch all review comments for this PR
+          COMMENTS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
+
+          # Find unresolved comments (i.e., not outdated and not replied to)
+          UNRESOLVED_COUNT=$(echo "$COMMENTS" | jq '[.[] | select(.in_reply_to_id == null and .position != null)] | length')
+
+          echo "🔍 Unresolved Comments: $UNRESOLVED_COUNT"
+
+          # Fail workflow if unresolved comments exist
+          if [ "$UNRESOLVED_COUNT" -gt 0 ]; then
+            echo "❌ PR has unresolved comments. Please resolve them before merging."
+            exit 1
+          fi
+
+          echo "✅ No unresolved comments found!"
+          
