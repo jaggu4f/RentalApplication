@@ -103,8 +103,15 @@ jobs:
           LINE=$(echo "$COMMENT" | jq -r '.line')
           TEXT=$(echo "$COMMENT" | jq -r '.comment')
 
-          echo "🔍 Processing comment for file: $FILE at line: $LINE"
-          echo "📄 Comment: $TEXT"
+          echo "🔍 Debug Info:"
+          echo "📄 File: $FILE"
+          echo "📌 Line: $LINE"
+          echo "💬 Comment: $TEXT"
+          # Ensure no empty values before calling GitHub API
+          if [[ -z "$FILE" || -z "$LINE" || -z "$TEXT" ]]; then
+            echo "❌ Skipping due to missing values!"
+            continue
+          fi
           gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
           -X POST \
           -F "body=$TEXT" \
