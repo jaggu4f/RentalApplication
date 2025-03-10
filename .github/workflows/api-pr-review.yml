@@ -38,12 +38,17 @@ jobs:
             "review": {
               "summary": "✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested.",
               "comments": [
-                {
-                    "file": "src/helpers.ts",
+                  {
+                    "file": "components/Button.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  },
+                  {
+                    "file": "helpers.ts",
                     "line": 1,
                     "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
                   }
-              ]
+                ]
             }
           }
           EOF
@@ -57,12 +62,17 @@ jobs:
           # Assign static inline comments
           REVIEW_INLINE_COMMENT=$(cat <<'EOF'
           [
-            {
-              "file": "helpers.ts",
-              "line": 1,
-              "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
-            }
-          ]
+                  {
+                    "file": "components/Button.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  },
+                  {
+                    "file": "helpers.ts",
+                    "line": 1,
+                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
+                  }
+                ]
           EOF
           )
 
@@ -92,12 +102,15 @@ jobs:
           FILE=$(echo "$COMMENT" | jq -r '.file')
           LINE=$(echo "$COMMENT" | jq -r '.line')
           TEXT=$(echo "$COMMENT" | jq -r '.comment')
+
+          echo "🔍 Processing comment for file: $FILE at line: $LINE"
+          echo "📄 Comment: $TEXT"
           gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
           -X POST \
           -F "body=$TEXT" \
           -F "commit_id=${{ github.event.pull_request.head.sha }}" \
           -F "path=$FILE" \
-          -F "line=$LINE"
+          -F "line=$LINE" || echo "❌ Failed to post comment on $FILE"
           -F "side=RIGHT"
           echo "GitHub API Response: $RESPONSE"
           done <<< "$(jq -c '.[]' inline_comments.json)"
