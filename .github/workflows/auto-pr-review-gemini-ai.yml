@@ -32,47 +32,31 @@ jobs:
             exit 0
           fi
 
-          # Static AI Review Inline Comments
-          RESPONSE=$(cat <<'EOF'
+          echo "🔍 Sending PR Diff to Gemini 2.0 Flash..."
+
           RESPONSE=$(curl -s -X POST \
-          -H "Content-Type: application/json" \
-          -H "Authorization: Bearer AIzaSyBgD85PrdkN2M8bFQA0HYOreAFkc_Z-TSA" \
-          -d '{
-            "contents": [{"role": "user", "parts": [{"text": "Review this code diff for issues and improvements:\n\n'"$(cat diff.txt)"'"}]}],
-            "generationConfig": {
-              "temperature": 0.3,
-              "maxOutputTokens": 1024
-            }
-          }' \
-          "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent")
-            echo "$RESPONSE" > review.json
-            echo "REVIEW=$(jq -r '.candidates[0].content.parts[0].text' review.json)" >> $GITHUB_ENV
-          EOF
-          )
-
-          echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
-          
-          # Extract the review comment from OpenAI's response
-          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.review.summary' || echo "⚠️ Error parsing AI response.")
-
-          # Assign static inline comments
-          REVIEW_INLINE_COMMENT=$(cat <<'EOF'
-          [
-              {
-                  "file": "src/components/Button.tsx",
-                  "line": 1,
-                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                },
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.GEMINI_API_KEY }}" \
+            -d '{
+              "contents": [
                 {
-                    "file": "src/components/ButtonCancel.tsx",
-                    "line": 1,
-                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                  }
-                ]
-          EOF
-          )
+                  "role": "user",
+                  "parts": [
+                    {"text": "Review this code diff for issues and improvements:\n\n'"$(cat pr_diff.txt)"'"}
+                  ]
+                }
+              ],
+              "generationConfig": {
+                "temperature": 0.3,
+                "maxOutputTokens": 1024
+              }
+            }' \
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent")
 
-          echo "$REVIEW_INLINE_COMMENT" > inline_comments.json
+          echo "🔍 API Response: $RESPONSE"  # Debugging log
+
+          # Extract the AI-generated review comment
+          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text' || echo "⚠️ Error parsing AI response.")
 
           echo "::set-output name=review::$REVIEW_COMMENT"
 
