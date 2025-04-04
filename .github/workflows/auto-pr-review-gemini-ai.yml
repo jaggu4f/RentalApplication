@@ -1,0 +1,143 @@
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited, reopened, ready_for_review]
+
+jobs:
+  ai_review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Fetch PR Diff
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
+
+      - name: Debug PR Diff Content
+        run: |
+          echo "🔍 PR Diff Content:"
+          cat pr_diff.txt || echo "⚠️ No changes detected in diff!"
+
+      - name: Call OpenAI for Review
+        id: ai_review
+        shell: bash
+        run: |
+          # Ensure pr_diff.txt exists and is not empty
+          if [ ! -f pr_diff.txt ] || [ ! -s pr_diff.txt ]; then
+            echo "⚠️ No code changes detected in PR or pr_diff.txt is missing. Skipping AI review."
+            exit 0
+          fi
+
+          # Static AI Review Inline Comments
+          RESPONSE=$(cat <<'EOF'
+          RESPONSE=$(curl -s -X POST \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer AIzaSyBgD85PrdkN2M8bFQA0HYOreAFkc_Z-TSA" \
+          -d '{
+            "contents": [{"role": "user", "parts": [{"text": "Review this code diff for issues and improvements:\n\n'"$(cat diff.txt)"'"}]}],
+            "generationConfig": {
+              "temperature": 0.3,
+              "maxOutputTokens": 1024
+            }
+          }' \
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent")
+            echo "$RESPONSE" > review.json
+            echo "REVIEW=$(jq -r '.candidates[0].content.parts[0].text' review.json)" >> $GITHUB_ENV
+          EOF
+          )
+
+          echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
+          
+          # Extract the review comment from OpenAI's response
+          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.review.summary' || echo "⚠️ Error parsing AI response.")
+
+          # Assign static inline comments
+          REVIEW_INLINE_COMMENT=$(cat <<'EOF'
+          [
+              {
+                  "file": "src/components/Button.tsx",
+                  "line": 1,
+                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                },
+                {
+                    "file": "src/components/ButtonCancel.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  }
+                ]
+          EOF
+          )
+
+          echo "$REVIEW_INLINE_COMMENT" > inline_comments.json
+
+          echo "::set-output name=review::$REVIEW_COMMENT"
+
+      - name: Post AI Review as PR Comment
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            **🤖 AI Code Review Summary:**
+            ${{ steps.ai_review.outputs.review }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post AI Inline Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f inline_comments.json ] || [ ! -s inline_comments.json ]; then
+            echo "✅ No inline comments to post."
+            exit 0
+          fi
+
+          # Fetch existing PR comments
+          EXISTING_COMMENTS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
+
+          cat inline_comments.json  # Debug JSON content
+          jq -c '.[]' inline_comments.json | while IFS= read -r COMMENT; do
+            FILE=$(echo "$COMMENT" | jq -r '.file')
+            LINE=$(echo "$COMMENT" | jq -r '.line')
+            TEXT=$(echo "$COMMENT" | jq -r '.comment')
+
+            echo "🔍 Checking file: $FILE at line: $LINE"
+
+            # Check if this exact comment already exists
+            if echo "$EXISTING_COMMENTS" | jq -e --arg file "$FILE" --argjson line "$LINE" --arg text "$TEXT" \
+              '.[] | select(.path == $file and .line == $line and .body == $text)' > /dev/null; then
+              echo "✅ Comment already exists, skipping..."
+              continue
+            fi
+
+            echo "💬 Posting new comment..."
+
+            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+              -X POST \
+              -F "body=$TEXT" \
+              -F "commit_id=${{ github.event.pull_request.head.sha }}" \
+              -F "path=$FILE" \
+              -F "line=$LINE"
+
+            sleep 2  # Prevent rate limits
+          done
+      - name: Check Unresolved Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Fetch all review comments for this PR
+          COMMENTS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
+
+          # Find unresolved comments (i.e., not outdated and not replied to)
+          UNRESOLVED_COUNT=$(echo "$COMMENTS" | jq '[.[] | select(.in_reply_to_id == null and .position != null)] | length')
+
+          echo "🔍 Unresolved Comments: $UNRESOLVED_COUNT"
+
+          # Fail workflow if unresolved comments exist
+          if [ "$UNRESOLVED_COUNT" -gt 0 ]; then
+            echo "❌ PR has unresolved comments. Please resolve them before merging."
+            exit 1
+          fi
+
+          echo "✅ No unresolved comments found!"
