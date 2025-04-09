@@ -80,7 +80,7 @@ jobs:
             exit 0
           fi
       
-          echo "$jq_output" > review_comments.json
+          jq '.review.comments' ai_response.json > pr_comments.json
       
           echo "📣 Posting inline comments to PR..."
           gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
