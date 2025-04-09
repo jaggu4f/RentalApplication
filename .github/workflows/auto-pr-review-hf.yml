@@ -37,7 +37,42 @@ jobs:
           echo "review<<EOF" >> $GITHUB_OUTPUT
           echo "$REVIEW" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+      - name: Generate Inline Comments with Hugging Face
+        id: inline_review
+        env:
+          HF_TOKEN: ${{ secrets.HF_API_KEY }}
+        run: |
+          DIFF=$(cat pr_diff.txt | head -c 2000)
 
+          PAYLOAD=$(jq -n --arg input "Please provide inline code review comments for the following diff. Format the response as a JSON array like: [{\"file\": \"<file>\", \"line\": <line>, \"comment\": \"<comment>\"}]\n\n$DIFF" '{inputs: $input}')
+          
+          RESPONSE=$(curl -s -X POST \
+            -H "Authorization: Bearer $HF_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
+
+          echo "$RESPONSE" > inline_response.json
+      - name: Post Inline Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          jq -c '.[]' inline_response.json | while read -r COMMENT; do
+            FILE=$(echo "$COMMENT" | jq -r '.file')
+            LINE=$(echo "$COMMENT" | jq -r '.line')
+            TEXT=$(echo "$COMMENT" | jq -r '.comment')
+
+            echo "🔍 Commenting on $FILE at line $LINE"
+            
+            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+              -X POST \
+              -F "body=$TEXT" \
+              -F "commit_id=${{ github.event.pull_request.head.sha }}" \
+              -F "path=$FILE" \
+              -F "line=$LINE"
+            
+            sleep 1
+          done
       - name: Post AI Review as PR Comment
         uses: thollander/actions-comment-pull-request@v2
         with:
