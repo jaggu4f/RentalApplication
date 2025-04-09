@@ -1,4 +1,4 @@
-name: AI PR Review (Colab Hosted)
+name: AI PR Review (Hugging Face Inline Comments)
 
 on:
   pull_request:
@@ -7,6 +7,10 @@ on:
 jobs:
   ai_review:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -17,27 +21,70 @@ jobs:
           git fetch origin ${{ github.event.pull_request.base.ref }}
           git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
 
-      - name: Call Colab-hosted AI Model
+      - name: Call Hugging Face for Inline Comments
         id: ai_review
+        env:
+          HF_TOKEN: ${{ secrets.HF_API_KEY }}
         run: |
-          DIFF=$(cat pr_diff.txt | head -c 2000) # Limit input size
-          PAYLOAD=$(jq -n --arg input "Please review this pull request diff and give a summary of issues or improvements:\n$DIFF" '{inputs: $input}')
+          DIFF=$(cat pr_diff.txt | head -c 4000) # limit size
+          DIFF=$(cat pr_diff.txt | head -c 2000)
+          PROMPT="You are an AI code reviewer. Based on the following Git diff, return inline comments as a JSON array. Each item must contain: 'file' (filename string), 'line' (line number as integer), and 'comment' (string). Do not include any explanations or non-JSON text. Output only valid JSON.
+
+          Here is the code diff:
+          
+          $DIFF"
+          PAYLOAD=$(jq -n --arg input "$PROMPT" '{inputs: $input}')
           
           RESPONSE=$(curl -s -X POST \
+            -H "Authorization: Bearer $HF_TOKEN" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
-            https://YOUR_COLAB_ENDPOINT/review)
-
+            https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
+          echo "🔍 Raw AI response:"
+          echo "$RESPONSE"
           echo "$RESPONSE" > response.json
-          REVIEW=$(jq -r '.review // .output // .generated_text' response.json)
-          echo "review=$REVIEW" >> $GITHUB_OUTPUT
-
-      - name: Post AI Review as PR Comment
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: |
-            🤖 **AI Code Review Summary**
-            
-            ${{ steps.ai_review.outputs.review }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
+          # Extract list of comment objects
+          echo "$RESPONSE" | jq -r '.[]? // .generated_text // .output' > inline_comments.txt
+
+          # Try to parse the JSON array from model output
+          grep -oP '\[\s*{.*}\s*\]' inline_comments.txt > inline_response.json || echo "[]" > inline_response.json
+
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh -y
+
+      - name: Post Inline Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+      
+          echo "🔍 Getting latest commit SHA..."
+          SHA=$(git rev-parse HEAD)
+          echo "Latest commit SHA: $SHA"
+      
+          # Extract and validate comments from inline_response.json
+          jq_output=$(jq -c '[.[] | select(.file and .line and .comment) | {
+            path: .file,
+            position: (.line | tonumber),
+            body: .comment
+          }]' inline_response.json)
+      
+          echo "🧪 Raw parsed comments: $jq_output"
+      
+          # Ensure it's a valid non-empty array
+          if [ "$jq_output" = "[]" ] || [ -z "$jq_output" ]; then
+            echo "⚠️ No valid inline comments to post."
+            exit 0
+          fi
+      
+          # Post the review using GitHub CLI
+          echo "$jq_output" > review_comments.json
+      
+          echo "📣 Posting inline comments to PR..."
+          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+            -X POST \
+            -f commit_id="$SHA" \
+            -f event="COMMENT" \
+            --raw-field comments="$(cat review_comments.json)"
+
