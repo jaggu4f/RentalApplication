@@ -1,0 +1,50 @@
+name: Auto PR Review (Hugging Face)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  hf-pr-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+
+      - name: Get PR Diff
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
+          echo "✅ Diff generated"
+
+      - name: Call Hugging Face Model for Review
+        id: call_hf
+        env:
+          HF_API_KEY: ${{ secrets.HF_API_KEY }}
+        run: |
+          DIFF=$(cat pr_diff.txt | head -c 4000) # Limit input for HF free tier
+          PROMPT="Please review the following GitHub pull request diff and provide a summary of issues, improvements, and suggestions:\n\n$DIFF"
+
+          RESPONSE=$(curl -s -X POST \
+            -H "Authorization: Bearer $HF_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"inputs\": \"$PROMPT\"}" \
+            https://api-inference.huggingface.co/models/bigcode/starcoder)
+
+          echo "💬 Hugging Face Response:"
+          echo "$RESPONSE"
+
+          REVIEW=$(echo "$RESPONSE" | jq -r '.[0].generated_text' || echo "⚠️ Unable to parse response")
+          echo "REVIEW<<EOF" >> $GITHUB_ENV
+          echo "$REVIEW" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Comment Review on PR
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            🧠 **AI Code Review by Hugging Face (StarCoder):**
+
+            ${{ env.REVIEW }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
