@@ -1,4 +1,4 @@
-name: AI PR Review (Hugging Face)
+name: AI PR Review (Hugging Face Inline Comments)
 
 on:
   pull_request:
@@ -7,6 +7,10 @@ on:
 jobs:
   ai_review:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -17,13 +21,13 @@ jobs:
           git fetch origin ${{ github.event.pull_request.base.ref }}
           git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
 
-      - name: Call Hugging Face for AI Review
+      - name: Call Hugging Face for Inline Comments
         id: ai_review
         env:
           HF_TOKEN: ${{ secrets.HF_API_KEY }}
         run: |
-          DIFF=$(cat pr_diff.txt | head -c 2000) # Limit input size
-          PAYLOAD=$(jq -n --arg input "Please review this pull request diff and give a summary of issues or improvements:\n$DIFF" '{inputs: $input}')
+          DIFF=$(cat pr_diff.txt | head -c 4000) # limit size
+          PAYLOAD=$(jq -n --arg input "Analyze the following code diff and suggest inline comments in JSON format with keys: file, line, comment. Only provide useful, concise code review comments.\n\n$DIFF" '{inputs: $input}')
           
           RESPONSE=$(curl -s -X POST \
             -H "Authorization: Bearer $HF_TOKEN" \
@@ -32,52 +36,35 @@ jobs:
             https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
 
           echo "$RESPONSE" > response.json
-          REVIEW=$(jq -r '.[]? // .generated_text // .output' response.json)
-          # Safely set multiline output
-          echo "review<<EOF" >> $GITHUB_OUTPUT
-          echo "$REVIEW" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-      - name: Generate Inline Comments with Hugging Face
-        id: inline_review
-        env:
-          HF_TOKEN: ${{ secrets.HF_API_KEY }}
-        run: |
-          DIFF=$(cat pr_diff.txt | head -c 2000)
-
-          PAYLOAD=$(jq -n --arg input "Please provide inline code review comments for the following diff. Format the response as a JSON array like: [{\"file\": \"<file>\", \"line\": <line>, \"comment\": \"<comment>\"}]\n\n$DIFF" '{inputs: $input}')
           
-          RESPONSE=$(curl -s -X POST \
-            -H "Authorization: Bearer $HF_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "$PAYLOAD" \
-            https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
+          # Extract list of comment objects
+          echo "$RESPONSE" | jq -r '.[]? // .generated_text // .output' > inline_comments.txt
 
-          echo "$RESPONSE" > inline_response.json
+          # Try to parse the JSON array from model output
+          grep -oP '\[\s*{.*}\s*\]' inline_comments.txt > inline_response.json || echo "[]" > inline_response.json
+
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh -y
+
       - name: Post Inline Comments
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          jq -c '.[]' inline_response.json | while read -r COMMENT; do
-            FILE=$(echo "$COMMENT" | jq -r '.file')
-            LINE=$(echo "$COMMENT" | jq -r '.line')
-            TEXT=$(echo "$COMMENT" | jq -r '.comment')
+          SHA=$(git rev-parse HEAD)
+          echo "Latest commit SHA: $SHA"
 
-            echo "🔍 Commenting on $FILE at line $LINE"
-            
-            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
-              -X POST \
-              -F "body=$TEXT" \
-              -F "commit_id=${{ github.event.pull_request.head.sha }}" \
-              -F "path=$FILE" \
-              -F "line=$LINE"
-            
-            sleep 1
-          done
-      - name: Post AI Review as PR Comment
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: |
-            🤖 **AI Code Review Summary**
-            
-            ${{ steps.ai_review.outputs.review }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Convert AI response to GitHub review comments
+          COMMENTS_JSON=$(jq -c '[.[] | {
+            path: .file,
+            position: (.line | tonumber),
+            body: .comment
+          }]' inline_response.json)
+
+          echo "$COMMENTS_JSON" > review_comments.json
+
+          echo "Posting comments..."
+          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+            -X POST \
+            -f commit_id="$SHA" \
+            -f event="COMMENT" \
+            -F comments=@review_comments.json
