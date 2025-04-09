@@ -1,45 +1,58 @@
-name: AI Code Review
+name: AI PR Review (Hugging Face Simple PR Comment)
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, edited, reopened, ready_for_review]
 
 jobs:
-  review:
+  ai_review:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Run AI model and save raw response
+      - name: Fetch PR Diff
         run: |
-          curl -X POST https://api-inference.huggingface.co/models/YOUR_MODEL \
-            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
+
+      - name: Call Hugging Face for PR Review Comment
+        id: ai_review
+        env:
+          HF_TOKEN: ${{ secrets.HF_API_KEY }}
+        run: |
+          DIFF=$(cat pr_diff.txt | head -c 2000)
+
+          PROMPT="You are an AI code reviewer. Review the following Git diff and provide a short GitHub PR comment. Do not include any explanations or JSON. Just return the comment in plain text that can be posted directly on the PR.
+
+          Git diff:
+          $DIFF"
+
+          PAYLOAD=$(jq -n --arg input "$PROMPT" '{inputs: $input}')
+
+          RESPONSE=$(curl -s -X POST \
+            -H "Authorization: Bearer $HF_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"inputs": "You are an AI code reviewer. Review the following PR..."}' \
-            > hf_output.txt
+            -d "$PAYLOAD" \
+            https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
 
-      - name: Extract review JSON
-        id: extract
-        run: node parse-review.js
+          COMMENT=$(echo "$RESPONSE" | jq -r '.[0].generated_text // .generated_text // empty')
 
-      - name: Print extracted review
-        run: echo "🔍 Extracted Review JSON: ${{ steps.extract.outputs.review_json }}"
+          echo "AI_REVIEW_COMMENT<<EOF" >> $GITHUB_ENV
+          echo "$COMMENT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
-      # (Optional) Step to post review comment to PR
-      - name: Comment on PR
+      - name: Post PR Comment
         uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            🤖 AI Code Review:
-            ```
-            ${{ steps.extract.outputs.review_json }}
-            ```
+            🤖 **AI PR Review:**
+
+            ${{ env.AI_REVIEW_COMMENT }}
