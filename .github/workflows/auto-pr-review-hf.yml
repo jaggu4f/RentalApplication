@@ -40,7 +40,8 @@ jobs:
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
             https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
-
+          echo "🔍 Raw AI response:"
+          echo "$RESPONSE"
           echo "$RESPONSE" > response.json
           
           # Extract list of comment objects
@@ -86,5 +87,6 @@ jobs:
             -f commit_id="$SHA" \
             -f event="COMMENT" \
             --raw-field comments="$(cat review_comments.json)"
+          
 
 
