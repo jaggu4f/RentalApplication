@@ -49,7 +49,15 @@ jobs:
 
           echo "$RESPONSE" > raw_response.json
 
-          COMMENT_JSON=$(echo "$RESPONSE" | jq -r '.[]?.generated_text // .generated_text // empty' | grep -oP '\[\s*{[\s\S]*}\s*\]' || echo "[]")
+          # Extract the generated_text string
+          GEN_TEXT=$(echo "$RESPONSE" | jq -r '.generated_text // .[0].generated_text // ""')
+
+          # If it's a valid JSON array inside a string, parse it
+          COMMENT_JSON=$(echo "$GEN_TEXT" | jq '.' 2>/dev/null || echo "[]")
+          
+          # Save it as parsed JSON
+          echo "$COMMENT_JSON" > inline_response.json
+
           echo "$COMMENT_JSON" | jq '.' > inline_response.json || echo "[]" > inline_response.json
 
       - name: Install GitHub CLI
