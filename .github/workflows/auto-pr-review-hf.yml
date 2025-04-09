@@ -54,17 +54,19 @@ jobs:
           echo "Latest commit SHA: $SHA"
 
           # Convert AI response to GitHub review comments
-          COMMENTS_JSON=$(jq -c '[.[] | {
+          COMMENTS_JSON=$(jq '[.[] | select(.file and .line and .comment) | {
             path: .file,
             position: (.line | tonumber),
             body: .comment
           }]' inline_response.json)
-
-          echo "$COMMENTS_JSON" > review_comments.json
+          
+          # Save as raw JSON (no quotes or newline)
+          echo "$COMMENTS_JSON" | jq . > review_comments.json
 
           echo "Posting comments..."
           gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
-            -X POST \
-            -f commit_id="$SHA" \
-            -f event="COMMENT" \
-            -F comments=@review_comments.json
+          -X POST \
+          -f commit_id="$SHA" \
+          -f event="COMMENT" \
+          --raw-field comments="$(cat review_comments.json)"
+
