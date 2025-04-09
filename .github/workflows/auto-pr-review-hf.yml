@@ -1,4 +1,4 @@
-name: AI PR Review (Hugging Face Simple PR Comment)
+name: AI PR Review (Inline Comments)
 
 on:
   pull_request:
@@ -21,15 +21,21 @@ jobs:
           git fetch origin ${{ github.event.pull_request.base.ref }}
           git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
 
-      - name: Call Hugging Face for PR Review Comment
+      - name: Call Hugging Face for Inline Comments
         id: ai_review
         env:
           HF_TOKEN: ${{ secrets.HF_API_KEY }}
         run: |
           DIFF=$(cat pr_diff.txt | head -c 2000)
 
-          PROMPT="You are an AI code reviewer. Review the following Git diff and provide a short GitHub PR comment. Do not include any explanations or JSON. Just return the comment in plain text that can be posted directly on the PR.
+          PROMPT="You are an AI code reviewer. Based on the following Git diff, return inline code review comments in JSON array format. Each item should include:
+          - 'file': file name string
+          - 'line': line number as an integer
+          - 'comment': the inline comment string
 
+          Do not include any explanation or extra text. Output only valid JSON array like:
+          [{\"file\":\"src/app.js\", \"line\":10, \"comment\":\"Consider renaming this function for clarity.\"}]
+          
           Git diff:
           $DIFF"
 
@@ -41,19 +47,38 @@ jobs:
             -d "$PAYLOAD" \
             https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
 
-          COMMENT=$(echo "$RESPONSE" | jq -r '.[0].generated_text // .generated_text // empty')
+          echo "🔍 Raw AI response:"
+          echo "$RESPONSE" > raw_response.json
 
-          echo "AI_REVIEW_COMMENT<<EOF" >> $GITHUB_ENV
-          echo "$COMMENT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          COMMENT_JSON=$(echo "$RESPONSE" | jq -r '.[]?.generated_text // .generated_text // empty' | grep -oP '\[\s*{[\s\S]*}\s*\]' || echo "[]")
+          echo "$COMMENT_JSON" | jq '.' > inline_response.json || echo "[]" > inline_response.json
 
-      - name: Post PR Comment
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            🤖 **AI PR Review:**
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh -y
 
-            ${{ env.AI_REVIEW_COMMENT }}
-            
+      - name: Post Inline Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          SHA=$(git rev-parse HEAD)
+          echo "Commit SHA: $SHA"
+
+          jq '[.[] | select(.file and .line and .comment) | {
+            path: .file,
+            position: (.line | tonumber),
+            body: .comment
+          }]' inline_response.json > review_comments.json
+
+          COUNT=$(jq length review_comments.json)
+          if [ "$COUNT" -eq 0 ]; then
+            echo "⚠️ No inline comments to post."
+            exit 0
+          fi
+
+          echo "📣 Posting $COUNT inline comments..."
+          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+            -X POST \
+            -f commit_id="$SHA" \
+            -f event="COMMENT" \
+            --raw-field comments="$(cat review_comments.json | jq -c '.')"
