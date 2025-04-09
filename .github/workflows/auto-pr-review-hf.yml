@@ -33,7 +33,10 @@ jobs:
 
           echo "$RESPONSE" > response.json
           REVIEW=$(jq -r '.[]? // .generated_text // .output' response.json)
-          echo "review=$REVIEW" >> $GITHUB_OUTPUT
+          # Safely set multiline output
+          echo "review<<EOF" >> $GITHUB_OUTPUT
+          echo "$REVIEW" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Post AI Review as PR Comment
         uses: thollander/actions-comment-pull-request@v2
