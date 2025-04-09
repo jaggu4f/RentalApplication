@@ -87,6 +87,4 @@ jobs:
             -f commit_id="$SHA" \
             -f event="COMMENT" \
             --raw-field comments="$(cat review_comments.json)"
-          
-
 
