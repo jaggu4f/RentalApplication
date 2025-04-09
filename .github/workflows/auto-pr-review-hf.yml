@@ -27,7 +27,9 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_API_KEY }}
         run: |
           DIFF=$(cat pr_diff.txt | head -c 4000) # limit size
-          PAYLOAD=$(jq -n --arg input "Analyze the following code diff and suggest inline comments in JSON format with keys: file, line, comment. Only provide useful, concise code review comments.\n\n$DIFF" '{inputs: $input}')
+          DIFF=$(cat pr_diff.txt | head -c 2000)
+          PROMPT="You are an AI code reviewer. Based on the following diff, provide inline code review comments. Return the result strictly as a JSON array, where each item includes: 'file' (string), 'line' (number), and 'comment' (string). Do not include any extra explanation or text. Here's the diff:\n$DIFF"
+          PAYLOAD=$(jq -n --arg input "$PROMPT" '{inputs: $input}')
           
           RESPONSE=$(curl -s -X POST \
             -H "Authorization: Bearer $HF_TOKEN" \
