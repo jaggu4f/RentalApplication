@@ -20,7 +20,7 @@ jobs:
       - name: Call Hugging Face for AI Review
         id: ai_review
         env:
-          HF_TOKEN: ${{ secrets.HUGGINGFACE_API_TOKEN }}
+          HF_TOKEN: ${{ secrets.HF_API_KEY }}
         run: |
           DIFF=$(cat pr_diff.txt | head -c 2000) # Limit input size
           PAYLOAD=$(jq -n --arg input "Please review this pull request diff and give a summary of issues or improvements:\n$DIFF" '{inputs: $input}')
