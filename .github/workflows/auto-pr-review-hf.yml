@@ -28,7 +28,11 @@ jobs:
         run: |
           DIFF=$(cat pr_diff.txt | head -c 4000) # limit size
           DIFF=$(cat pr_diff.txt | head -c 2000)
-          PROMPT="You are an AI code reviewer. Based on the following diff, provide inline code review comments. Return the result strictly as a JSON array, where each item includes: 'file' (string), 'line' (number), and 'comment' (string). Do not include any extra explanation or text. Here's the diff:\n$DIFF"
+          PROMPT="You are an AI code reviewer. Based on the following Git diff, return inline comments as a JSON array. Each item must contain: 'file' (filename string), 'line' (line number as integer), and 'comment' (string). Do not include any explanations or non-JSON text. Output only valid JSON.
+
+          Here is the code diff:
+          
+          $DIFF"
           PAYLOAD=$(jq -n --arg input "$PROMPT" '{inputs: $input}')
           
           RESPONSE=$(curl -s -X POST \
