@@ -50,23 +50,35 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -e
+      
+          echo "🔍 Getting latest commit SHA..."
           SHA=$(git rev-parse HEAD)
           echo "Latest commit SHA: $SHA"
-
-          # Convert AI response to GitHub review comments
-          COMMENTS_JSON=$(jq '[.[] | select(.file and .line and .comment) | {
+      
+          # Extract and validate comments from inline_response.json
+          jq_output=$(jq -c '[.[] | select(.file and .line and .comment) | {
             path: .file,
             position: (.line | tonumber),
             body: .comment
           }]' inline_response.json)
-          
-          # Save as raw JSON (no quotes or newline)
-          echo "$COMMENTS_JSON" | jq . > review_comments.json
-
-          echo "Posting comments..."
+      
+          echo "🧪 Raw parsed comments: $jq_output"
+      
+          # Ensure it's a valid non-empty array
+          if [ "$jq_output" = "[]" ] || [ -z "$jq_output" ]; then
+            echo "⚠️ No valid inline comments to post."
+            exit 0
+          fi
+      
+          # Post the review using GitHub CLI
+          echo "$jq_output" > review_comments.json
+      
+          echo "📣 Posting inline comments to PR..."
           gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
-          -X POST \
-          -f commit_id="$SHA" \
-          -f event="COMMENT" \
-          --raw-field comments="$(cat review_comments.json)"
+            -X POST \
+            -f commit_id="$SHA" \
+            -f event="COMMENT" \
+            --raw-field comments="$(cat review_comments.json)"
+
 
