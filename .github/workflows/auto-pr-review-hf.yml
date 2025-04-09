@@ -29,7 +29,7 @@ jobs:
             -H "Authorization: Bearer $HF_TOKEN" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
-            https://api-inference.huggingface.co/models/Salesforce/codet5p-770m)
+            https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
 
           echo "$RESPONSE" > response.json
           REVIEW=$(jq -r '.[]? // .generated_text // .output' response.json)
