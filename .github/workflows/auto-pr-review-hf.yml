@@ -1,50 +1,45 @@
-name: Auto PR Review (Hugging Face)
+name: AI PR Review (Hugging Face)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, edited, reopened, ready_for_review]
 
 jobs:
-  hf-pr-review:
+  ai_review:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout PR code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get PR Diff
+      - name: Fetch PR Diff
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
           git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
-          echo "✅ Diff generated"
 
-      - name: Call Hugging Face Model for Review
-        id: call_hf
+      - name: Call Hugging Face for AI Review
+        id: ai_review
         env:
-          HF_API_KEY: ${{ secrets.HF_API_KEY }}
+          HF_TOKEN: ${{ secrets.HUGGINGFACE_API_TOKEN }}
         run: |
-          DIFF=$(cat pr_diff.txt | head -c 4000) # Limit input for HF free tier
-          PROMPT="Please review the following GitHub pull request diff and provide a summary of issues, improvements, and suggestions:\n\n$DIFF"
-
+          DIFF=$(cat pr_diff.txt | head -c 2000) # Limit input size
+          PAYLOAD=$(jq -n --arg input "Please review this pull request diff and give a summary of issues or improvements:\n$DIFF" '{inputs: $input}')
+          
           RESPONSE=$(curl -s -X POST \
-            -H "Authorization: Bearer $HF_API_KEY" \
+            -H "Authorization: Bearer $HF_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"inputs\": \"$PROMPT\"}" \
-            https://api-inference.huggingface.co/models/bigcode/starcoder)
+            -d "$PAYLOAD" \
+            https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
 
-          echo "💬 Hugging Face Response:"
-          echo "$RESPONSE"
+          echo "$RESPONSE" > response.json
+          REVIEW=$(jq -r '.[]? // .generated_text // .output' response.json)
+          echo "review=$REVIEW" >> $GITHUB_OUTPUT
 
-          REVIEW=$(echo "$RESPONSE" | jq -r '.[0].generated_text' || echo "⚠️ Unable to parse response")
-          echo "REVIEW<<EOF" >> $GITHUB_ENV
-          echo "$REVIEW" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Comment Review on PR
+      - name: Post AI Review as PR Comment
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            🧠 **AI Code Review by Hugging Face (StarCoder):**
-
-            ${{ env.REVIEW }}
+            🤖 **AI Code Review Summary**
+            
+            ${{ steps.ai_review.outputs.review }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
