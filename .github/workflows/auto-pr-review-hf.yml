@@ -39,26 +39,19 @@ jobs:
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
             https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
-          
-          # Check if API failed (HTML response)
+
           ERROR_MESSAGE=$(echo "$RESPONSE" | jq -r 'if type == "object" and has("error") then .error else "" end')
           if [[ "$ERROR_MESSAGE" != "" ]]; then
             echo "⚠️ Detected error in response: $ERROR_MESSAGE"
             echo "📦 Falling back to static response..."
-      
             RESPONSE=$(cat response.json)
           fi
-      
-          # Save to file for Python script or further steps
+
           echo "🔍 Raw AI response:"
           echo "$RESPONSE"
           echo "$RESPONSE" > response.json
-          
 
-          # Extract JSON array from response
           COMMENT_JSON="$RESPONSE"
-          echo "🔍 Raw AI COMMENT_JSON:"
-          echo "$COMMENT_JSON"
           echo "$COMMENT_JSON" | jq '.' > inline_response.json || echo "[]" > inline_response.json
 
       - name: Install GitHub CLI
@@ -77,7 +70,6 @@ jobs:
           echo "📄 Contents of inline_response.json:"
           cat inline_response.json
 
-          # Create proper GitHub review comment format
           jq '[.[] | select(.file and .line and .comment) | {
             path: .file,
             position: (.line | tonumber),
@@ -92,8 +84,11 @@ jobs:
           fi
 
           echo "📣 Posting $COMMENT_COUNT inline comments to PR..."
+
+          jq -n --arg commit_id "$SHA" --arg event "COMMENT" \
+            --argjson comments "$(cat review_comments.json)" \
+            '{commit_id: $commit_id, event: $event, comments: $comments}' > request_body.json
+
           gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
             -X POST \
-            -f commit_id="$SHA" \
-            -f event="COMMENT" \
-            --raw-field comments="$(cat review_comments.json | jq -c '.')"
+            --input request_body.json
