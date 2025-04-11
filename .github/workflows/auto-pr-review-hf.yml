@@ -13,4 +13,3 @@
         line = comment['line']
         text = comment['comment']
         print(f'::notice file={file},line={line}::{text}')
-    "
