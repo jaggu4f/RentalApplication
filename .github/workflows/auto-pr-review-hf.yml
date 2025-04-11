@@ -1,64 +1,68 @@
-name: AI PR Review (Static Response Inline Comments)
+name: AI PR Reviewer (Static Response)
 
 on:
   pull_request:
-    types: [opened, synchronize, edited, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
 
 jobs:
-  ai_review:
+  review:
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       pull-requests: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Load Static Inline Comments for POC
+      - name: Extract PR info
+        id: pr_info
         run: |
-          echo "📄 Loading static response from response.json..."
-          
-          # Extract and parse the nested stringified JSON (as in your example format)
-          STRINGIFIED=$(jq -r '.[0].generated_text' response.json)
-          echo "$STRINGIFIED" > inline_parsed.json
+          echo "PR_NUMBER=$(echo ${{ github.event.pull_request.number }})" >> $GITHUB_ENV
+          echo "PR_SHA=$(echo ${{ github.event.pull_request.head.sha }})" >> $GITHUB_ENV
 
-          jq '.review.comments' inline_parsed.json > inline_response.json || echo "[]" > inline_response.json
+      - name: Simulate AI Response (Static JSON)
+        id: ai_review
+        run: |
+          cat <<EOF > review.json
+          {
+            "comments": [
+              {
+                "file": "src/utils/helpers.js",
+                "line": 12,
+                "comment": "Consider using optional chaining here to avoid potential runtime errors."
+              },
+              {
+                "file": "src/components/Header.js",
+                "line": 24,
+                "comment": "This function could be broken into smaller units for readability."
+              }
+            ]
+          }
+          EOF
 
-      - name: Install GitHub CLI
-        run: sudo apt-get install gh -y
+      - name: Post inline comments
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: response.json
+          recreate: true
 
-      - name: Post Inline Comments
+      - name: Post review using GitHub CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -e
+          COMMENTS=$(jq -c '.comments[]' response.json)
+          for COMMENT in $COMMENTS; do
+            FILE=$(echo "$COMMENT" | jq -r '.file')
+            LINE=$(echo "$COMMENT" | jq -r '.line')
+            BODY=$(echo "$COMMENT" | jq -r '.comment')
 
-          echo "🔍 Getting latest commit SHA..."
-          SHA=$(git rev-parse HEAD)
-          echo "Latest commit SHA: $SHA"
-
-          echo "📄 Contents of inline_response.json:"
-          cat inline_response.json
-
-          # Create proper GitHub review comment format
-          jq '[.[] | select(.file and .line and .comment) | {
-            path: .file,
-            position: (.line | tonumber),
-            body: .comment
-          }]' inline_response.json > review_comments.json
-
-          COMMENT_COUNT=$(jq 'length' review_comments.json)
-
-          if [ "$COMMENT_COUNT" -eq 0 ]; then
-            echo "⚠️ No valid inline comments to post. Skipping review."
-            exit 0
-          fi
-
-          echo "📣 Posting $COMMENT_COUNT inline comments to PR..."
-          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
-            -X POST \
-            -f commit_id="$SHA" \
-            -f event="COMMENT" \
-            --raw-field comments="$(cat review_comments.json | jq -c '.')"
+            echo "Commenting on $FILE:$LINE - $BODY"
+            
+            gh pr review $PR_NUMBER --comment -b "$BODY"
+            gh pr comment $PR_NUMBER \
+              --body "$BODY" \
+              --repo ${{ github.repository }} \
+              --body "$BODY" \
+              --subject "$FILE:$LINE"
+          done
