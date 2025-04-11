@@ -54,34 +54,6 @@ jobs:
           COMMENT_JSON="$RESPONSE"
           echo "$COMMENT_JSON" | jq '.' > inline_response.json || echo "[]" > inline_response.json
 
-      - name: Install GitHub CLI
-        run: sudo apt-get install gh -y
-
-      - name: Post Inline Comments
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -e
-
-          echo "🔍 Getting latest commit SHA..."
-          SHA=$(git rev-parse HEAD)
-          echo "Latest commit SHA: $SHA"
-
-          echo "📄 Contents of inline_response.json:"
-          cat inline_response.json
-
-          jq '[.[] | select(.file and .line and .comment) | {
-            path: .file,
-            position: (.line | tonumber),
-            body: .comment
-          }]' inline_response.json > review_comments.json
-
-          COMMENT_COUNT=$(jq 'length' review_comments.json)
-
-          if [ "$COMMENT_COUNT" -eq 0 ]; then
-            echo "⚠️ No valid inline comments to post. Skipping review."
-            exit 0
-          fi
       - name: Debug AI Output and Files
         run: |
           echo "📦 Inline Comments JSON:"
@@ -91,12 +63,38 @@ jobs:
           git diff --name-only origin/${{ github.event.pull_request.base.ref }} > changed_files.txt
           cat changed_files.txt
 
-          echo "📣 Posting $COMMENT_COUNT inline comments to PR..."
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh -y
 
-          jq -n --arg commit_id "$SHA" --arg event "COMMENT" \
-            --argjson comments "$(cat review_comments.json)" \
-            '{commit_id: $commit_id, event: $event, comments: $comments}' > request_body.json
+      - name: Post Inline Comments
+  env:
+    GH_TOKEN: ${{ github.token }}
+  run: |
+    set -e
 
-          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
-            -X POST \
-            --input request_body.json
+    echo "🔍 Getting latest commit SHA..."
+    SHA=$(git rev-parse HEAD)
+    echo "Latest commit SHA: $SHA"
+
+    echo "📄 Contents of inline_response.json:"
+    cat inline_response.json
+
+    jq '[.[] | select(.file and .line and .comment) | {
+      path: .file,
+      position: (.line | tonumber),
+      body: .comment
+    }]' inline_response.json > review_comments.json
+
+    COMMENT_COUNT=$(jq 'length' review_comments.json)
+
+    if [ "$COMMENT_COUNT" -eq 0 ]; then
+      echo "⚠️ No valid inline comments to post. Skipping review."
+      exit 0
+    fi
+
+    echo "📣 Posting $COMMENT_COUNT inline comments to PR..."
+    gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+      -X POST \
+      -f commit_id="$SHA" \
+      -f event="COMMENT" \
+      --raw-field comments="$(cat review_comments.json | jq -c '.')"
