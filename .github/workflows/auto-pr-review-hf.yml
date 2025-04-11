@@ -125,7 +125,7 @@ jobs:
 
           # Construct full payload
           jq -n \
-            --arg commit_id "$(git rev-parse HEAD)" \
+            --arg commit_id "${{ github.event.pull_request.head.sha }}" \
             --arg event "COMMENT" \
             --slurpfile comments review_comments.json \
             '{commit_id: $commit_id, event: $event, comments: $comments[0]}' > full_review_payload.json
