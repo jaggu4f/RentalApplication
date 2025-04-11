@@ -51,18 +51,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMENTS=$(jq -c '.comments[]' response.json)
+          COMMENTS=$(jq -c '.[]' response.json)
+      
           for COMMENT in $COMMENTS; do
             FILE=$(echo "$COMMENT" | jq -r '.file')
             LINE=$(echo "$COMMENT" | jq -r '.line')
             BODY=$(echo "$COMMENT" | jq -r '.comment')
-
-            echo "Commenting on $FILE:$LINE - $BODY"
-            
-            gh pr review $PR_NUMBER --comment -b "$BODY"
-            gh pr comment $PR_NUMBER \
+      
+            echo "Posting comment on $FILE:$LINE - $BODY"
+      
+            gh pr comment ${{ github.event.pull_request.number }} \
               --body "$BODY" \
-              --repo ${{ github.repository }} \
-              --body "$BODY" \
-              --subject "$FILE:$LINE"
+              --repo ${{ github.repository }}
           done
