@@ -111,24 +111,29 @@ jobs:
           jq '.review.comments' ai_response.json > inline_comments.json
 
           COMMENT_COUNT=$(jq 'length' inline_comments.json)
-
           if [ "$COMMENT_COUNT" -eq 0 ]; then
             echo "⚠️ No inline comments found in AI response."
             exit 0
           fi
 
+          # Prepare comments array in correct format
           jq '[.[] | {
             path: .file,
             position: (.line | tonumber),
             body: .comment
           }]' inline_comments.json > review_comments.json
 
-          echo "📝 Posting inline comments..."
-          COMMIT_SHA=$(git rev-parse HEAD)
+          # Construct full payload
+          jq -n \
+            --arg commit_id "$(git rev-parse HEAD)" \
+            --arg event "COMMENT" \
+            --slurpfile comments review_comments.json \
+            '{commit_id: $commit_id, event: $event, comments: $comments[0]}' > full_review_payload.json
 
+          # Post review
+          echo "📝 Posting inline comments..."
           gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
             -X POST \
-            -f commit_id="$COMMIT_SHA" \
-            -f event="COMMENT" \
-            --field comments="$(cat review_comments.json)"
+            --input full_review_payload.json
+
 
