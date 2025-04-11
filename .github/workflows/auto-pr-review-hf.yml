@@ -76,57 +76,39 @@ jobs:
       - name: Map lines to diff positions
         id: map_positions
         run: |
-          git diff origin/${{ github.event.pull_request.base.ref }} HEAD --unified=0 > patch.diff
+          echo "🔍 Mapping AI comments to diff positions..."
+      
+          git diff origin/${{ github.event.pull_request.base.ref }} HEAD --unified=10 > patch.diff
+      
+          > final_comments.json
       
           jq -c '.[]' filtered_comments.json | while read -r comment; do
             FILE=$(echo "$comment" | jq -r '.path')
             LINE=$(echo "$comment" | jq -r '.position')
             BODY=$(echo "$comment" | jq -r '.body')
       
-            POSITION=0
-            FOUND=false
-            CURRENT_FILE=""
-            CURRENT_LINE=0
-            POSITION_IN_HUNK=0
+            # Find position in PR diff using `gh pr diff`
+            POSITION=$(gh pr diff ${{ github.event.pull_request.number }} --path="$FILE" --patch \
+              | grep -n -A10 "^@@ " \
+              | grep -B10 "^+$(sed 's/[][\.*^$(){}?+|/]/\\&/g' <<< "$(sed -n "${LINE}p" "$FILE")")" \
+              | head -n1 | cut -d: -f1)
       
-            while IFS= read -r PATCH_LINE; do
-              if [[ "$PATCH_LINE" =~ ^diff\ --git\ a\/(.*)\ b\/ ]]; then
-                CURRENT_FILE="${BASH_REMATCH[1]}"
-                continue
-              fi
-      
-              if [[ "$PATCH_LINE" =~ ^@@\ \-(.*)\ +(.*)\ @@ ]]; then
-                START_LINE=$(echo "${BASH_REMATCH[2]}" | cut -d',' -f1)
-                CURRENT_LINE=$START_LINE
-                POSITION_IN_HUNK=0
-                continue
-              fi
-      
-              if [[ "$PATCH_LINE" =~ ^\+ ]]; then
-                ((POSITION_IN_HUNK++))
-                if [[ "$CURRENT_FILE" == "$FILE" && "$CURRENT_LINE" -eq "$LINE" ]]; then
-                  echo "{ \"path\": \"$FILE\", \"position\": $POSITION_IN_HUNK, \"body\": \"$BODY\" }" >> final_comments.json
-                  FOUND=true
-                  break
-                fi
-                ((CURRENT_LINE++))
-              elif [[ ! "$PATCH_LINE" =~ ^- ]]; then
-                ((CURRENT_LINE++))
-              fi
-            done < patch.diff
-      
-            if [[ "$FOUND" == false ]]; then
-              echo "❌ Line $LINE in $FILE not found in diff – skipping"
+            if [ -n "$POSITION" ]; then
+              echo "{ \"path\": \"$FILE\", \"position\": $LINE, \"body\": \"$BODY\" }" >> final_comments.json
             fi
           done
       
-          if [ -f final_comments.json ]; then
+          if [ -s final_comments.json ]; then
             echo "[" > filtered_positions.json
             sed '$!s/$/,/' final_comments.json >> filtered_positions.json
             echo "]" >> filtered_positions.json
           else
             echo "[]" > filtered_positions.json
           fi
+      
+          echo "✅ Final mapped comments:"
+          cat filtered_positions.json
+
 
 
       - name: Post inline comments
