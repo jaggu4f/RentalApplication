@@ -12,29 +12,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Fetch PR Diff
+      - name: Get base branch
+        id: base
+        run: echo "BASE_REF=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+
+      - name: Fetch PR diff
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
-          git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
+          git diff origin/${{ github.event.pull_request.base.ref }} HEAD --unified=0 > pr.diff
 
-      - name: Run AI Review
+      - name: Simulate AI Review Output
         id: ai_review
         run: |
-          echo "Running AI review..."
           cat <<EOF > inline_response.json
           {
             "review": {
-              "summary": "✅ Overall, the code is clean. ⚠️ Some suggestions provided below.",
+              "summary": "✅ Overall review is good. Suggestions are listed inline.",
               "comments": [
                 {
-                  "file": "src/components/Button.tsx",
-                  "line": 1,
-                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                },
-                {
                   "file": "src/helpers.ts",
-                  "line": 1,
-                  "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
+                  "line": 3,
+                  "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation.\n\n💡 Suggested:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
                 }
               ]
             }
@@ -44,108 +42,99 @@ jobs:
       - name: Install GitHub CLI
         run: sudo apt-get install gh -y
 
-      - name: Filter out duplicate inline comments
-        id: filter_duplicates
+      - name: Fetch existing comments
+        id: fetch_comments
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🔍 Fetching existing comments from PR..."
-          EXISTING=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
+          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments > existing_comments.json
 
-          echo "$EXISTING" > existing_comments.json
-
-          jq -n --argjson existing "$EXISTING" --slurpfile ai inline_response.json '
+      - name: Filter duplicates
+        id: filter_duplicates
+        run: |
+          jq -n \
+            --slurpfile ai inline_response.json \
+            --slurpfile existing existing_comments.json '
             [ $ai[0].review.comments[] | select(
-              ($existing[] | 
-                select(
-                  .path == .file and 
-                  .original_position == (.line | tonumber) and 
-                  .body == .comment
-                )
-              ) | not
+              ($existing[0][]? | select(
+                .path == .file and 
+                .original_position == (.line | tonumber) and 
+                .body == .comment
+              )) | not
             ) | {
               path: .file,
-              position: (.line | tonumber),
+              line: .line,
               body: .comment
             } ]' > filtered_comments.json
 
-          echo "✅ Filtered comments:"
-          cat filtered_comments.json
-          
-      - name: Map lines to diff positions
+      - name: Map line numbers to diff positions
         id: map_positions
         run: |
-          echo "🔍 Mapping line numbers to diff positions..."
-          touch final_comments.json
+          echo "[" > final_comments.json
+          found=0
 
-          while read -r file; do
-            echo "Processing file: $file"
-            patch_content=$(git diff origin/${{ github.event.pull_request.base.ref }} HEAD -- $file --unified=0)
-            echo "$patch_content" > temp.patch
-
-            awk '
-              /^@@/ {
-                split($0, a, " ")
-                split(a[2], old, ",")
-                split(a[3], new, ",")
-                old_line = substr(old[1], 2)
-                new_line = substr(new[1], 2)
-                position = 0
-                next
-              }
-              {
-                position++
-                if ($0 ~ /^\+/ && $0 !~ /^\+\+\+/) {
-                  print new_line, position, substr($0, 2)
-                  new_line++
-                } else if ($0 !~ /^-/) {
-                  new_line++
-                }
-              }
-            ' temp.patch > positions.txt
+          while IFS= read -r file; do
+            diff_output=$(git diff origin/${{ github.event.pull_request.base.ref }} HEAD --unified=0 -- "$file")
+            echo "$diff_output" > patch.diff
 
             while IFS= read -r comment; do
-              COMMENT_LINE=$(echo "$comment" | jq -r '.position')
-              COMMENT_BODY=$(echo "$comment" | jq -r '.body')
-              COMMENT_FILE=$(echo "$comment" | jq -r '.path')
+              FILE=$(echo "$comment" | jq -r '.path')
+              LINE=$(echo "$comment" | jq -r '.line')
+              BODY=$(echo "$comment" | jq -r '.body')
 
-              POS_LINE=$(awk -v line="$COMMENT_LINE" '$1 == line { print $2 }' positions.txt)
+              POSITION=$(awk -v line="$LINE" '
+                /^@@/ {
+                  split($0, a, " ")
+                  split(a[3], range, ",")
+                  new_start = substr(range[1], 2)
+                  new_len = range[2] == "" ? 1 : range[2]
+                  next
+                }
+                /^\+/ && !/^\+\+\+/ {
+                  pos++
+                  if (NR > 1 && (new_start + pos - 1) == line) {
+                    print NR
+                    exit
+                  }
+                }
+              ' patch.diff)
 
-              if [ -n "$POS_LINE" ]; then
-                echo "{ \"path\": \"$COMMENT_FILE\", \"position\": $POS_LINE, \"body\": \"$COMMENT_BODY\" }" >> final_comments.json
+              if [ -n "$POSITION" ]; then
+                echo "{ \"path\": \"$FILE\", \"position\": $POSITION, \"body\": \"$BODY\" }," >> final_comments.json
+                found=1
               fi
             done < <(jq -c --arg file "$file" '.[] | select(.path == $file)' filtered_comments.json)
-
           done < <(jq -r '.[].path' filtered_comments.json | sort -u)
 
-          if [ -s final_comments.json ]; then
-            echo "[" > filtered_positions.json
-            sed '$!s/$/,/' final_comments.json >> filtered_positions.json
-            echo "]" >> filtered_positions.json
+          if [ "$found" -eq 1 ]; then
+            sed -i '$ s/,$//' final_comments.json
+            echo "]" >> final_comments.json
           else
-            echo "[]" > filtered_positions.json
+            echo "]" >> final_comments.json
           fi
-
-
 
       - name: Post inline comments
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMENTS=$(cat filtered_positions.json)
+          COMMENTS=$(cat final_comments.json)
           if [ "$(jq length <<< "$COMMENTS")" -eq 0 ]; then
             echo "✅ No new inline comments to post."
             exit 0
           fi
 
-          PAYLOAD=$(jq -n --arg commit_id "${{ github.event.pull_request.head.sha }}" --argjson comments "$COMMENTS" '{
-            commit_id: $commit_id,
-            event: "COMMENT",
-            comments: $comments
-          }')
+          PAYLOAD=$(jq -n \
+            --arg commit_id "${{ github.event.pull_request.head.sha }}" \
+            --argjson comments "$COMMENTS" \
+            '{
+              commit_id: $commit_id,
+              event: "COMMENT",
+              comments: $comments
+            }')
 
           echo "$PAYLOAD" > payload.json
+
           gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
             --method POST \
             --input payload.json
@@ -154,7 +143,6 @@ jobs:
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            **🤖 AI Code Review Summary**
-            ${{ fromJson(steps.ai_review.outputs.review || '{"review": { "summary": "✅ Overall review posted." }}').review.summary }}
+            🤖 **AI Code Review Summary**
+            ${{ fromJson(steps.ai_review.outputs.review || '{"review": { "summary": "✅ No issues found." }}').review.summary }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
