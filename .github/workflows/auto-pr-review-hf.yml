@@ -71,34 +71,61 @@ jobs:
 
           echo "✅ Filtered comments:"
           cat filtered_comments.json
+          
       - name: Map lines to diff positions
         id: map_positions
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr diff ${{ github.event.pull_request.number }} --json files --jq '.files[].path' > changed_files.txt
+          echo "🔍 Mapping line numbers to diff positions..."
+          touch final_comments.json
 
-          jq -c '.[]' filtered_comments.json | while read -r comment; do
-            FILE=$(echo "$comment" | jq -r '.path')
-            LINE=$(echo "$comment" | jq -r '.position')
-            BODY=$(echo "$comment" | jq -r '.body')
+          while read -r file; do
+            echo "Processing file: $file"
+            patch_content=$(git diff origin/${{ github.event.pull_request.base.ref }} HEAD -- $file --unified=0)
+            echo "$patch_content" > temp.patch
 
-            POSITION=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq \
-              ".files[] | select(.path==\"$FILE\") | .patch" \
-              | grep -n "^+.*" | sed -n "${LINE}p" | cut -d: -f1)
+            awk '
+              /^@@/ {
+                split($0, a, " ")
+                split(a[2], old, ",")
+                split(a[3], new, ",")
+                old_line = substr(old[1], 2)
+                new_line = substr(new[1], 2)
+                position = 0
+                next
+              }
+              {
+                position++
+                if ($0 ~ /^\+/ && $0 !~ /^\+\+\+/) {
+                  print new_line, position, substr($0, 2)
+                  new_line++
+                } else if ($0 !~ /^-/) {
+                  new_line++
+                }
+              }
+            ' temp.patch > positions.txt
 
-            if [ -n "$POSITION" ]; then
-              echo "{ \"path\": \"$FILE\", \"position\": $POSITION, \"body\": \"$BODY\" }" >> final_comments.json
-            fi
-          done
+            while IFS= read -r comment; do
+              COMMENT_LINE=$(echo "$comment" | jq -r '.position')
+              COMMENT_BODY=$(echo "$comment" | jq -r '.body')
+              COMMENT_FILE=$(echo "$comment" | jq -r '.path')
 
-          if [ -f final_comments.json ]; then
+              POS_LINE=$(awk -v line="$COMMENT_LINE" '$1 == line { print $2 }' positions.txt)
+
+              if [ -n "$POS_LINE" ]; then
+                echo "{ \"path\": \"$COMMENT_FILE\", \"position\": $POS_LINE, \"body\": \"$COMMENT_BODY\" }" >> final_comments.json
+              fi
+            done < <(jq -c --arg file "$file" '.[] | select(.path == $file)' filtered_comments.json)
+
+          done < <(jq -r '.[].path' filtered_comments.json | sort -u)
+
+          if [ -s final_comments.json ]; then
             echo "[" > filtered_positions.json
             sed '$!s/$/,/' final_comments.json >> filtered_positions.json
             echo "]" >> filtered_positions.json
           else
             echo "[]" > filtered_positions.json
           fi
+
 
 
       - name: Post inline comments
