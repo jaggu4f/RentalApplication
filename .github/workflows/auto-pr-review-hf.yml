@@ -22,24 +22,24 @@ jobs:
         run: |
           echo "Running AI review..."
           cat <<EOF > inline_response.json
-{
-  "review": {
-    "summary": "✅ Overall, the code is clean. ⚠️ Some suggestions provided below.",
-    "comments": [
-      {
-        "file": "src/components/Button.tsx",
-        "line": 1,
-        "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-      },
-      {
-        "file": "src/helpers.ts",
-        "line": 1,
-        "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
-      }
-    ]
-  }
-}
-EOF
+          {
+            "review": {
+              "summary": "✅ Overall, the code is clean. ⚠️ Some suggestions provided below.",
+              "comments": [
+                {
+                  "file": "src/components/Button.tsx",
+                  "line": 1,
+                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                },
+                {
+                  "file": "src/helpers.ts",
+                  "line": 1,
+                  "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
+                }
+              ]
+            }
+          }
+          EOF
 
       - name: Install GitHub CLI
         run: sudo apt-get install gh -y
