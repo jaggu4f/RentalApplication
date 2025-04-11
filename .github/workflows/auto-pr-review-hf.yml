@@ -3,14 +3,14 @@
     echo "Reading response.json"
     python3 -c "import json
 
-with open('response.json', 'r') as f:
+  with open('response.json', 'r') as f:
     data = json.load(f)
 
-review_data = data[0]['generated_text']['review']['comments']
+    review_data = data[0]['generated_text']['review']['comments']
 
-for comment in review_data:
-    file = comment['file']
-    line = comment['line']
-    text = comment['comment']
-    print(f'::notice file={file},line={line}::{text}')
-"
+    for comment in review_data:
+        file = comment['file']
+        line = comment['line']
+        text = comment['comment']
+        print(f'::notice file={file},line={line}::{text}')
+    "
