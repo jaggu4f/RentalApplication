@@ -40,12 +40,11 @@ jobs:
             -d "$PAYLOAD" \
             https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
           
-          echo "🔍 Raw AI response:"
           # Check if API failed (HTML response)
           if echo "$RESPONSE" | grep -q "<!DOCTYPE"; then
             echo "API call failed. Using static response instead."
       
-            RESPONSE='[
+            RESPONSE=[
               {
                 "generated_text": {
                   "review": {
@@ -64,12 +63,12 @@ jobs:
                   }
                 }
               }
-            ]'
+            ]
           fi
       
           # Save to file for Python script or further steps
+          echo "🔍 Raw AI response:"
           echo "$RESPONSE" > response.json
-          echo "$RESPONSE" > raw_response.json
 
           # Extract JSON array from response
           COMMENT_JSON=$(echo "$RESPONSE" | jq -r '.[]?.generated_text // .generated_text // .output // empty' | grep -oP '\[\s*{[\s\S]*}\s*\]' || echo "[]")
