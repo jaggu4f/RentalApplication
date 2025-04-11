@@ -44,7 +44,7 @@ jobs:
           if echo "$RESPONSE" | grep -q "<!DOCTYPE"; then
             echo "API call failed. Using static response instead."
       
-            RESPONSE=[
+            RESPONSE='[
               {
                 "generated_text": {
                   "review": {
@@ -63,7 +63,7 @@ jobs:
                   }
                 }
               }
-            ]
+            ]'
           fi
       
           # Save to file for Python script or further steps
