@@ -18,11 +18,6 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          if [ ! -f pr_diff.txt ] || [ ! -s pr_diff.txt ]; then
-            echo "⚠️ No code changes detected in PR or pr_diff.txt is missing. Skipping AI review."
-            exit 0
-          fi
-      
           echo "📤 Sending PR diff to OpenAI..."
       
           RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
