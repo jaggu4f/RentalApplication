@@ -68,6 +68,7 @@ jobs:
       
           # Save to file for Python script or further steps
           echo "🔍 Raw AI response:"
+          echo "$RESPONSE"
           echo "$RESPONSE" > response.json
 
           # Extract JSON array from response
