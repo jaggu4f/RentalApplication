@@ -46,10 +46,11 @@ jobs:
           }
           EOF
           )
-          echo "$RESPONSE"
+          
           echo "$RESPONSE" | jq . > openai_response.json || echo "{}" > openai_response.json
       
           if jq -e '.error' openai_response.json > /dev/null; then
+            echo "$RESPONSE"
             echo "⚠️ OpenAI call failed. Using static fallback response."
             echo '{
               "review": {
