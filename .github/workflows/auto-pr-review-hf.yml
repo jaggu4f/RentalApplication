@@ -1,8 +1,8 @@
-name: AI PR Review with Inline Comments
+name: AI PR Review
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, edited, reopened, ready_for_review]
 
 jobs:
   ai_review:
@@ -12,135 +12,136 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get base branch
-        id: base
-        run: echo "BASE_REF=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
-
-      - name: Fetch PR diff
+      - name: Fetch PR Diff
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
-          git diff origin/${{ github.event.pull_request.base.ref }} HEAD --unified=0 > pr.diff
+          git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
 
-      - name: Simulate AI Review Output
+      - name: Debug PR Diff Content
+        run: |
+          echo "🔍 PR Diff Content:"
+          cat pr_diff.txt || echo "⚠️ No changes detected in diff!"
+
+      - name: Call OpenAI for Review
         id: ai_review
+        shell: bash
         run: |
-          cat <<EOF > inline_response.json
-          {
-            "review": {
-              "summary": "✅ Overall review is good. Suggestions are listed inline.",
-              "comments": [
-                {
-                  "file": "src/helpers.ts",
-                  "line": 3,
-                  "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation.\n\n💡 Suggested:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
-                }
-              ]
-            }
-          }
-          EOF
-
-      - name: Install GitHub CLI
-        run: sudo apt-get install gh -y
-
-      - name: Fetch existing comments
-        id: fetch_comments
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments > existing_comments.json
-
-      - name: Filter duplicates
-        id: filter_duplicates
-        run: |
-          jq -n \
-            --slurpfile ai inline_response.json \
-            --slurpfile existing existing_comments.json '
-            [ $ai[0].review.comments[] | select(
-              ($existing[0][]? | select(
-                .path == .file and 
-                .original_position == (.line | tonumber) and 
-                .body == .comment
-              )) | not
-            ) | {
-              path: .file,
-              line: .line,
-              body: .comment
-            } ]' > filtered_comments.json
-
-      - name: Print diff file
-        run: cat pr.diff
-        
-      - name: Debug filtered comments
-        run: cat filtered_comments.json
-        
-      - name: Map lines to diff positions
-        id: map_positions
-        run: |
-          echo "🔍 Mapping AI comments to diff positions..."
-      
-          git diff origin/${{ github.event.pull_request.base.ref }} HEAD --unified=10 > patch.diff
-      
-          > final_comments.json
-      
-          jq -c '.[]' filtered_comments.json | while read -r comment; do
-            FILE=$(echo "$comment" | jq -r '.path')
-            LINE=$(echo "$comment" | jq -r '.position')
-            BODY=$(echo "$comment" | jq -r '.body')
-      
-            # Find position in PR diff using `gh pr diff`
-            POSITION=$(gh pr diff ${{ github.event.pull_request.number }} --path="$FILE" --patch \
-              | grep -n -A10 "^@@ " \
-              | grep -B10 "^+$(sed 's/[][\.*^$(){}?+|/]/\\&/g' <<< "$(sed -n "${LINE}p" "$FILE")")" \
-              | head -n1 | cut -d: -f1)
-      
-            if [ -n "$POSITION" ]; then
-              echo "{ \"path\": \"$FILE\", \"position\": $LINE, \"body\": \"$BODY\" }" >> final_comments.json
-            fi
-          done
-      
-          if [ -s final_comments.json ]; then
-            echo "[" > filtered_positions.json
-            sed '$!s/$/,/' final_comments.json >> filtered_positions.json
-            echo "]" >> filtered_positions.json
-          else
-            echo "[]" > filtered_positions.json
-          fi
-      
-          echo "✅ Final mapped comments:"
-          cat filtered_positions.json
-
-
-
-      - name: Post inline comments
-        if: success()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          COMMENTS=$(cat final_comments.json)
-          if [ "$(jq length <<< "$COMMENTS")" -eq 0 ]; then
-            echo "✅ No new inline comments to post."
+          # Ensure pr_diff.txt exists and is not empty
+          if [ ! -f pr_diff.txt ] || [ ! -s pr_diff.txt ]; then
+            echo "⚠️ No code changes detected in PR or pr_diff.txt is missing. Skipping AI review."
             exit 0
           fi
 
-          PAYLOAD=$(jq -n \
-            --arg commit_id "${{ github.event.pull_request.head.sha }}" \
-            --argjson comments "$COMMENTS" \
-            '{
-              commit_id: $commit_id,
-              event: "COMMENT",
-              comments: $comments
-            }')
+          # Static AI Review Inline Comments
+          RESPONSE=$(cat <<'EOF'
+          {
+            "review": {
+              "summary": "✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested.",
+              "comments": [
+                  {
+                    "file": "src/components/Button.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  },
+                  {
+                    "file": "src/components/ButtonCancel.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  }
+                ]
+            }
+          }
+          EOF
+          )
 
-          echo "$PAYLOAD" > payload.json
+          echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
+          
+          # Extract the review comment from OpenAI's response
+          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.review.summary' || echo "⚠️ Error parsing AI response.")
 
-          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
-            --method POST \
-            --input payload.json
+          # Assign static inline comments
+          REVIEW_INLINE_COMMENT=$(cat <<'EOF'
+          [
+              {
+                  "file": "src/components/Button.tsx",
+                  "line": 1,
+                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                },
+                {
+                    "file": "src/components/ButtonCancel.tsx",
+                    "line": 1,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  }
+                ]
+          EOF
+          )
 
-      - name: Post AI Review Summary
+          echo "$REVIEW_INLINE_COMMENT" > inline_comments.json
+
+          echo "::set-output name=review::$REVIEW_COMMENT"
+
+      - name: Post AI Review as PR Comment
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            🤖 **AI Code Review Summary**
-            ${{ fromJson(steps.ai_review.outputs.review || '{"review": { "summary": "✅ No issues found." }}').review.summary }}
+            **🤖 AI Code Review Summary:**
+            ${{ steps.ai_review.outputs.review }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post AI Inline Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f inline_comments.json ] || [ ! -s inline_comments.json ]; then
+            echo "✅ No inline comments to post."
+            exit 0
+          fi
+
+          # Fetch existing PR comments
+          EXISTING_COMMENTS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
+
+          cat inline_comments.json  # Debug JSON content
+          jq -c '.[]' inline_comments.json | while IFS= read -r COMMENT; do
+            FILE=$(echo "$COMMENT" | jq -r '.file')
+            LINE=$(echo "$COMMENT" | jq -r '.line')
+            TEXT=$(echo "$COMMENT" | jq -r '.comment')
+
+            echo "🔍 Checking file: $FILE at line: $LINE"
+
+            # Check if this exact comment already exists
+            if echo "$EXISTING_COMMENTS" | jq -e --arg file "$FILE" --argjson line "$LINE" --arg text "$TEXT" \
+              '.[] | select(.path == $file and .line == $line and .body == $text)' > /dev/null; then
+              echo "✅ Comment already exists, skipping..."
+              continue
+            fi
+
+            echo "💬 Posting new comment..."
+
+            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+              -X POST \
+              -F "body=$TEXT" \
+              -F "commit_id=${{ github.event.pull_request.head.sha }}" \
+              -F "path=$FILE" \
+              -F "line=$LINE"
+
+            sleep 2  # Prevent rate limits
+          done
+      - name: Check Unresolved Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Fetch all review comments for this PR
+          COMMENTS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
+
+          # Find unresolved comments (i.e., not outdated and not replied to)
+          UNRESOLVED_COUNT=$(echo "$COMMENTS" | jq '[.[] | select(.in_reply_to_id == null and .position != null)] | length')
+
+          echo "🔍 Unresolved Comments: $UNRESOLVED_COUNT"
+
+          # Fail workflow if unresolved comments exist
+          if [ "$UNRESOLVED_COUNT" -gt 0 ]; then
+            echo "❌ PR has unresolved comments. Please resolve them before merging."
+            exit 1
+          fi
+
+          echo "✅ No unresolved comments found!"
