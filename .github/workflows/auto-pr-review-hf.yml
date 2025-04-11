@@ -108,7 +108,6 @@ jobs:
           echo "📄 Parsed ai_response.json:"
           cat ai_response.json
 
-          echo "🔧 Extracting inline comments..."
           jq '.review.comments' ai_response.json > inline_comments.json
 
           COMMENT_COUNT=$(jq 'length' inline_comments.json)
@@ -118,9 +117,6 @@ jobs:
             exit 0
           fi
 
-          echo "✅ $COMMENT_COUNT inline comments found."
-
-          # Convert to GitHub inline review comment format
           jq '[.[] | {
             path: .file,
             position: (.line | tonumber),
@@ -134,4 +130,5 @@ jobs:
             -X POST \
             -f commit_id="$COMMIT_SHA" \
             -f event="COMMENT" \
-            --raw-field comments="$(cat review_comments.json | jq -c '.')"
+            --field comments="$(cat review_comments.json)"
+
