@@ -82,6 +82,14 @@ jobs:
             echo "⚠️ No valid inline comments to post. Skipping review."
             exit 0
           fi
+      - name: Debug AI Output and Files
+        run: |
+          echo "📦 Inline Comments JSON:"
+          cat inline_response.json
+
+          echo "📦 Files changed in PR:"
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} > changed_files.txt
+          cat changed_files.txt
 
           echo "📣 Posting $COMMENT_COUNT inline comments to PR..."
 
