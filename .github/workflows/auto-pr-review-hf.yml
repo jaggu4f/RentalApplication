@@ -91,7 +91,6 @@ jobs:
       echo "⚠️ No valid inline comments to post. Skipping review."
       exit 0
     fi
-
     echo "📣 Posting $COMMENT_COUNT inline comments to PR..."
     gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
       -X POST \
