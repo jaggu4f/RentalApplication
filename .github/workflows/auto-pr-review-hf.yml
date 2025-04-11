@@ -1,4 +1,4 @@
-name: AI PR Review (Hugging Face Inline Comments)
+name: AI PR Review (Static Response Inline Comments)
 
 on:
   pull_request:
@@ -16,37 +16,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Fetch PR Diff
+      - name: Load Static Inline Comments for POC
         run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
-
-      - name: Call Hugging Face for Inline Comments
-        id: ai_review
-        env:
-          HF_TOKEN: ${{ secrets.HF_API_KEY }}
-        run: |
-          DIFF=$(cat pr_diff.txt | head -c 2000)
-          PROMPT="You are an AI code reviewer. Based on the following Git diff, return inline comments as a JSON array. Each item must contain: 'file' (filename string), 'line' (line number as integer), and 'comment' (string). Do not include any explanations or non-JSON text. Output only valid JSON.
-
-          Here is the code diff:
-
-          $DIFF"
-          PAYLOAD=$(jq -n --arg input "$PROMPT" '{inputs: $input}')
+          echo "📄 Loading static response from response.json..."
           
-          RESPONSE=$(curl -s -X POST \
-            -H "Authorization: Bearer $HF_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "$PAYLOAD" \
-            https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
-          
-          echo "🔍 Raw AI response:"
-          echo "$RESPONSE"
-          echo "$RESPONSE" > raw_response.json
+          # Extract and parse the nested stringified JSON (as in your example format)
+          STRINGIFIED=$(jq -r '.[0].generated_text' response.json)
+          echo "$STRINGIFIED" > inline_parsed.json
 
-          # Extract JSON array from response
-          COMMENT_JSON=$(echo "$RESPONSE" | jq -r '.[]?.generated_text // .generated_text // .output // empty' | grep -oP '\[\s*{[\s\S]*}\s*\]' || echo "[]")
-          echo "$COMMENT_JSON" | jq '.' > inline_response.json || echo "[]" > inline_response.json
+          jq '.review.comments' inline_parsed.json > inline_response.json || echo "[]" > inline_response.json
 
       - name: Install GitHub CLI
         run: sudo apt-get install gh -y
