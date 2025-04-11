@@ -88,10 +88,50 @@ jobs:
 
           echo "::set-output name=review::$REVIEW_COMMENT"
 
-      - name: Post AI Review as PR Comment
+      - name: Post AI Review Summary as PR Comment
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            **🤖 AI Code Review:**
+            **🤖 AI Code Review Summary:**
             ${{ steps.ai_review.outputs.review }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh -y
+
+      - name: Post Inline Comments to PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+
+          echo "📄 Parsed ai_response.json:"
+          cat ai_response.json
+
+          echo "🔧 Extracting inline comments..."
+          jq '.review.comments' ai_response.json > inline_comments.json
+
+          COMMENT_COUNT=$(jq 'length' inline_comments.json)
+
+          if [ "$COMMENT_COUNT" -eq 0 ]; then
+            echo "⚠️ No inline comments found in AI response."
+            exit 0
+          fi
+
+          echo "✅ $COMMENT_COUNT inline comments found."
+
+          # Convert to GitHub inline review comment format
+          jq '[.[] | {
+            path: .file,
+            position: (.line | tonumber),
+            body: .comment
+          }]' inline_comments.json > review_comments.json
+
+          echo "📝 Posting inline comments..."
+          COMMIT_SHA=$(git rev-parse HEAD)
+
+          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+            -X POST \
+            -f commit_id="$COMMIT_SHA" \
+            -f event="COMMENT" \
+            --raw-field comments="$(cat review_comments.json | jq -c '.')"
