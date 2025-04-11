@@ -67,6 +67,12 @@ jobs:
               body: .comment
             } ]' > filtered_comments.json
 
+      - name: Print diff file
+        run: cat pr.diff
+        
+      - name: Debug filtered comments
+        run: cat filtered_comments.json
+        
       - name: Map line numbers to diff positions
         id: map_positions
         run: |
