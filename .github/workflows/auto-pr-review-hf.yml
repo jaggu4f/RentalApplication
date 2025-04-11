@@ -1,66 +1,87 @@
-name: AI PR Reviewer (Static Response)
+name: AI PR Review (Hugging Face Inline Comments)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, edited, reopened, ready_for_review]
 
 jobs:
-  review:
+  ai_review:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       pull-requests: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Extract PR info
-        id: pr_info
+      - name: Fetch PR Diff
         run: |
-          echo "PR_NUMBER=$(echo ${{ github.event.pull_request.number }})" >> $GITHUB_ENV
-          echo "PR_SHA=$(echo ${{ github.event.pull_request.head.sha }})" >> $GITHUB_ENV
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
 
-      - name: Simulate AI Response (Static JSON)
+      - name: Call Hugging Face for Inline Comments
         id: ai_review
+        env:
+          HF_TOKEN: ${{ secrets.HF_API_KEY }}
         run: |
-          cat <<EOF > review.json
-          {
-            "comments": [
-              {
-                "file": "src/utils/helpers.js",
-                "line": 12,
-                "comment": "Consider using optional chaining here to avoid potential runtime errors."
-              },
-              {
-                "file": "src/components/Header.js",
-                "line": 24,
-                "comment": "This function could be broken into smaller units for readability."
-              }
-            ]
-          }
-          EOF
+          DIFF=$(cat pr_diff.txt | head -c 2000)
+          PROMPT="You are an AI code reviewer. Based on the following Git diff, return inline comments as a JSON array. Each item must contain: 'file' (filename string), 'line' (line number as integer), and 'comment' (string). Do not include any explanations or non-JSON text. Output only valid JSON.
 
-      - name: Post inline comments
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          path: response.json
-          recreate: true
+          Here is the code diff:
 
-      - name: Post review using GitHub CLI
+          $DIFF"
+          PAYLOAD=$(jq -n --arg input "$PROMPT" '{inputs: $input}')
+          
+          RESPONSE=$(curl -s -X POST \
+            -H "Authorization: Bearer $HF_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
+          
+          echo "🔍 Raw AI response:"
+          echo "$RESPONSE"
+          echo "$RESPONSE" > raw_response.json
+
+          # Extract JSON array from response
+          COMMENT_JSON=$(echo "$RESPONSE" | jq -r '.[]?.generated_text // .generated_text // .output // empty' | grep -oP '\[\s*{[\s\S]*}\s*\]' || echo "[]")
+          echo "$COMMENT_JSON" | jq '.' > inline_response.json || echo "[]" > inline_response.json
+
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh -y
+
+      - name: Post Inline Comments
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMENTS=$(jq -c '.[]' response.json)
-      
-          for COMMENT in $COMMENTS; do
-            FILE=$(echo "$COMMENT" | jq -r '.file')
-            LINE=$(echo "$COMMENT" | jq -r '.line')
-            BODY=$(echo "$COMMENT" | jq -r '.comment')
-      
-            echo "Posting comment on $FILE:$LINE - $BODY"
-      
-            gh pr comment ${{ github.event.pull_request.number }} \
-              --body "$BODY" \
-              --repo ${{ github.repository }}
-          done
+          set -e
+
+          echo "🔍 Getting latest commit SHA..."
+          SHA=$(git rev-parse HEAD)
+          echo "Latest commit SHA: $SHA"
+
+          echo "📄 Contents of inline_response.json:"
+          cat inline_response.json
+
+          # Create proper GitHub review comment format
+          jq '[.[] | select(.file and .line and .comment) | {
+            path: .file,
+            position: (.line | tonumber),
+            body: .comment
+          }]' inline_response.json > review_comments.json
+
+          COMMENT_COUNT=$(jq 'length' review_comments.json)
+
+          if [ "$COMMENT_COUNT" -eq 0 ]; then
+            echo "⚠️ No valid inline comments to post. Skipping review."
+            exit 0
+          fi
+
+          echo "📣 Posting $COMMENT_COUNT inline comments to PR..."
+          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+            -X POST \
+            -f commit_id="$SHA" \
+            -f event="COMMENT" \
+            --raw-field comments="$(cat review_comments.json | jq -c '.')"
+
