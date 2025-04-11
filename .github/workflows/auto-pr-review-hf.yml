@@ -73,36 +73,23 @@ jobs:
           cat filtered_comments.json
       - name: Map lines to diff positions
         id: map_positions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git diff origin/${{ github.event.pull_request.base.ref }} HEAD --unified=0 > patch.diff
+          gh pr diff ${{ github.event.pull_request.number }} --json files --jq '.files[].path' > changed_files.txt
 
-          jq -n --slurpfile comments filtered_comments.json '
-            $comments[0][] as $c |
-            {
-              file: $c.path,
-              line: $c.position,
-              body: $c.body
-            }' > remapped.json
+          jq -c '.[]' filtered_comments.json | while read -r comment; do
+            FILE=$(echo "$comment" | jq -r '.path')
+            LINE=$(echo "$comment" | jq -r '.position')
+            BODY=$(echo "$comment" | jq -r '.body')
 
-          while read -r file; do
-            echo "Processing $file..."
-            FILE_PATCH=$(awk "/^diff --git a\/$file b\/$file/,/^diff --git/" patch.diff | head -n -1)
+            POSITION=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq \
+              ".files[] | select(.path==\"$FILE\") | .patch" \
+              | grep -n "^+.*" | sed -n "${LINE}p" | cut -d: -f1)
 
-            echo "$FILE_PATCH" > temp.patch
-
-            while IFS= read -r line; do
-              COMMENT_FILE=$(echo "$line" | jq -r '.file')
-              COMMENT_LINE=$(echo "$line" | jq -r '.line')
-              COMMENT_BODY=$(echo "$line" | jq -r '.body')
-
-              POSITION=$(gh pr diff ${{ github.event.pull_request.number }} --path "$COMMENT_FILE" \
-                | grep -n -A1 "@@ " | grep -B1 "$COMMENT_BODY" | head -n1 | cut -d: -f1 || echo "")
-
-              if [ -n "$POSITION" ]; then
-                echo "{ \"path\": \"$COMMENT_FILE\", \"position\": $POSITION, \"body\": \"$COMMENT_BODY\" }" >> final_comments.json
-              fi
-            done < remapped.json
-
+            if [ -n "$POSITION" ]; then
+              echo "{ \"path\": \"$FILE\", \"position\": $POSITION, \"body\": \"$BODY\" }" >> final_comments.json
+            fi
           done
 
           if [ -f final_comments.json ]; then
@@ -112,6 +99,7 @@ jobs:
           else
             echo "[]" > filtered_positions.json
           fi
+
 
       - name: Post inline comments
         if: success()
