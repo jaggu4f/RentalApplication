@@ -20,7 +20,7 @@ jobs:
           with open("response.json", "r") as f:
               data = json.load(f)
 
-          comments = data["generated_text"]["review"]["comments"]
+          comments = data[0]["generated_text"]["review"]["comments"]
 
           for comment in comments:
               file = comment["file"]
