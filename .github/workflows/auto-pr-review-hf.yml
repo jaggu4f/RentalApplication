@@ -46,26 +46,7 @@ jobs:
             echo "⚠️ Detected error in response: $ERROR_MESSAGE"
             echo "📦 Falling back to static response..."
       
-            RESPONSE='[
-              {
-                "generated_text": {
-                  "review": {
-                    "comments": [
-                      {
-                        "file": "src/index.js",
-                        "line": 12,
-                        "comment": "Consider simplifying this loop."
-                      },
-                      {
-                        "file": "src/utils/helper.js",
-                        "line": 5,
-                        "comment": "Use '\''const'\'' instead of '\''let'\'' if variable is not reassigned."
-                      }
-                    ]
-                  }
-                }
-              }
-            ]'
+            RESPONSE=$(cat response.json)
           fi
       
           # Save to file for Python script or further steps
