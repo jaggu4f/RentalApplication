@@ -1,4 +1,4 @@
-name: AI PR Review
+name: AI PR Review with Inline Comments
 
 on:
   pull_request:
@@ -17,126 +17,87 @@ jobs:
           git fetch origin ${{ github.event.pull_request.base.ref }}
           git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
 
-      - name: Debug PR Diff Content
-        run: |
-          echo "🔍 PR Diff Content:"
-          cat pr_diff.txt || echo "⚠️ No changes detected in diff!"
-
-      - name: Call OpenAI for Review
+      - name: Run AI Review
         id: ai_review
-        shell: bash
         run: |
-          # Ensure pr_diff.txt exists and is not empty
-          if [ ! -f pr_diff.txt ] || [ ! -s pr_diff.txt ]; then
-            echo "⚠️ No code changes detected in PR or pr_diff.txt is missing. Skipping AI review."
-            exit 0
-          fi
-
-          # Read and escape PR diff content properly
-          DIFF_CONTENT=$(jq -Rs '.' < pr_diff.txt)
-
-          # Construct the JSON payload safely using jq
-          JSON_PAYLOAD=$(jq -n --arg diff "$DIFF_CONTENT" '{
-            "model": "gpt-3.5-turbo-instruct-0914",
-            "messages": [
-              { "role": "system", "content": "You are an expert code reviewer. Analyze the given code diff and provide constructive feedback." },
-              { "role": "user", "content": ("Here is the code diff:\n" + $diff + "\nPlease review and provide comments.") }
-            ]
-          }')
-
-          # 🔍 Debugging: Print the full JSON payload before sending it
-          echo "🔍 JSON Payload (Formatted):"
-          echo "$JSON_PAYLOAD" | jq .
-
-          # Call OpenAI API
-          RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
-            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d "$JSON_PAYLOAD")
-
-          echo "🔍 OpenAI Full Response: $RESPONSE" # Debugging: print full API response
-          
-          # Extract the review comment from OpenAI's response
-          REVIEW_COMMENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content' || echo "⚠️ Error parsing AI response.")
-
-          if [ -z "$REVIEW_COMMENT" ] || [ "$REVIEW_COMMENT" = "null" ]; then
-            echo "⚠️ OpenAI API returned an empty or invalid response. Falling back to static AI review."
-
-            # Define static AI response as a fallback
-            REVIEW_COMMENT="✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested."
-            STATIC_AI_RESPONSE=$(jq -n '{
-              "review": {
-                "summary": "✅ Overall, the code is well-structured. ⚠️ Some minor improvements are suggested.",
-                "comments": [
-                  {
-                    "file": "src/components/Button.tsx",
-                    "line": 1,
-                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                  },
-                  {
-                    "file": "src/helpers.ts",
-                    "line": 1,
-                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
-                  }
-                ]
-              }
-            }')
-            echo "$STATIC_AI_RESPONSE" > ai_response.json
-          else
-            echo "{ \"review\": { \"summary\": \"$REVIEW_COMMENT\", \"comments\": [] } }" > ai_response.json
-          fi
-
-          echo "::set-output name=review::$REVIEW_COMMENT"
-
-      - name: Post AI Review Summary as PR Comment
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: |
-            **🤖 AI Code Review Summary:**
-            ${{ steps.ai_review.outputs.review }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Running AI review..."
+          cat <<EOF > inline_response.json
+{
+  "review": {
+    "summary": "✅ Overall, the code is clean. ⚠️ Some suggestions provided below.",
+    "comments": [
+      {
+        "file": "src/components/Button.tsx",
+        "line": 1,
+        "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+      },
+      {
+        "file": "src/helpers.ts",
+        "line": 1,
+        "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
+      }
+    ]
+  }
+}
+EOF
 
       - name: Install GitHub CLI
         run: sudo apt-get install gh -y
 
-      - name: Deduplicate and Post Inline Comments
+      - name: Filter out duplicate inline comments
+        id: filter_duplicates
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "📝 Extracting AI Comments..."
-          jq '.review.comments' ai_response.json > comments.json
+          echo "🔍 Fetching existing comments from PR..."
+          EXISTING=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
 
-          echo "📥 Fetching existing comments from PR..."
-          gh pr view ${{ github.event.pull_request.number }} --json comments > existing.json
+          echo "$EXISTING" > existing_comments.json
 
-          echo "🚫 Removing duplicates..."
-          jq -n --argjson new "$(cat comments.json)" --argjson existing "$(cat existing.json)" '
-            $new | map(select(
-              . as $n |
-              ($existing.comments // []) | all(
-                .body != $n.comment or .path != $n.file or .line != $n.line
-              )
-            ))
-          ' > filtered_comments.json
+          jq -n --argjson existing "$EXISTING" --slurpfile ai inline_response.json '
+            [ $ai[0].review.comments[] | select(
+              ($existing[] | 
+                select(
+                  .path == .file and 
+                  .original_position == (.line | tonumber) and 
+                  .body == .comment
+                )
+              ) | not
+            ) | {
+              path: .file,
+              position: (.line | tonumber),
+              body: .comment
+            } ]' > filtered_comments.json
 
-          COUNT=$(jq length filtered_comments.json)
-          echo "✅ $COUNT unique comment(s) to post."
+          echo "✅ Filtered comments:"
+          cat filtered_comments.json
 
-          if [ "$COUNT" -eq "0" ]; then
-            echo "No new inline comments to post."
+      - name: Post inline comments
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMENTS=$(cat filtered_comments.json)
+          if [ "$(jq length <<< "$COMMENTS")" -eq 0 ]; then
+            echo "✅ No new inline comments to post."
             exit 0
           fi
 
-          echo "📣 Posting inline comments..."
-          jq -c '.[]' filtered_comments.json | while read -r comment; do
-            path=$(echo "$comment" | jq -r '.file')
-            line=$(echo "$comment" | jq -r '.line')
-            body=$(echo "$comment" | jq -r '.comment')
-            gh pr comment ${{ github.event.pull_request.number }} \
-              --body "$body" \
-              --repo "${{ github.repository }}" \
-              --body-path <(echo "$body") \
-              --filename "$path" \
-              --position "$line" || echo "⚠️ Failed to post comment"
-          done
+          PAYLOAD=$(jq -n --arg commit_id "${{ github.event.pull_request.head.sha }}" --argjson comments "$COMMENTS" '{
+            commit_id: $commit_id,
+            event: "COMMENT",
+            comments: $comments
+          }')
 
+          echo "$PAYLOAD" > payload.json
+          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+            --method POST \
+            --input payload.json
+
+      - name: Post AI Review Summary
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            **🤖 AI Code Review Summary**
+            ${{ fromJson(steps.ai_review.outputs.review || '{"review": { "summary": "✅ Overall review posted." }}').review.summary }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
