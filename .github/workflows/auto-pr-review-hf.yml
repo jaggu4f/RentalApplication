@@ -41,8 +41,10 @@ jobs:
             https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta)
           
           # Check if API failed (HTML response)
-          if echo "$RESPONSE" | grep -q "<!DOCTYPE"; then
-            echo "API call failed. Using static response instead."
+          ERROR_MESSAGE=$(echo "$RESPONSE" | jq -r 'if type == "object" and has("error") then .error else "" end')
+          if [[ "$ERROR_MESSAGE" != "" ]]; then
+            echo "⚠️ Detected error in response: $ERROR_MESSAGE"
+            echo "📦 Falling back to static response..."
       
             RESPONSE='[
               {
