@@ -45,7 +45,7 @@ jobs:
           echo "$RESPONSE" > raw_response.json
 
           # Extract JSON array from response
-          COMMENT_JSON=$(echo "$RESPONSE" | jq -r '.[]?.generated_text // .generated_text // .output // empty' | grep -oP '\[\s*{[\s\S]*}\s*\]' || echo "[]")
+          COMMENT_JSON=$(jq -c '.[]' response.json)| grep -oP '\[\s*{[\s\S]*}\s*\]' || echo "[]")
           echo "$COMMENT_JSON" | jq '.' > inline_response.json || echo "[]" > inline_response.json
 
       - name: Install GitHub CLI
