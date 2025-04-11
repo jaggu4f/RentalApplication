@@ -99,40 +99,44 @@ jobs:
       - name: Install GitHub CLI
         run: sudo apt-get install gh -y
 
-      - name: Post Inline Comments to PR
+      - name: Deduplicate and Post Inline Comments
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -e
+          echo "📝 Extracting AI Comments..."
+          jq '.review.comments' ai_response.json > comments.json
 
-          echo "📄 Parsed ai_response.json:"
-          cat ai_response.json
+          echo "📥 Fetching existing comments from PR..."
+          gh pr view ${{ github.event.pull_request.number }} --json comments > existing.json
 
-          jq '.review.comments' ai_response.json > inline_comments.json
+          echo "🚫 Removing duplicates..."
+          jq -n --argjson new "$(cat comments.json)" --argjson existing "$(cat existing.json)" '
+            $new | map(select(
+              . as $n |
+              ($existing.comments // []) | all(
+                .body != $n.comment or .path != $n.file or .line != $n.line
+              )
+            ))
+          ' > filtered_comments.json
 
-          COMMENT_COUNT=$(jq 'length' inline_comments.json)
-          if [ "$COMMENT_COUNT" -eq 0 ]; then
-            echo "⚠️ No inline comments found in AI response."
+          COUNT=$(jq length filtered_comments.json)
+          echo "✅ $COUNT unique comment(s) to post."
+
+          if [ "$COUNT" -eq "0" ]; then
+            echo "No new inline comments to post."
             exit 0
           fi
 
-          # Prepare comments array in correct format
-          jq '[.[] | {
-            path: .file,
-            position: (.line | tonumber),
-            body: .comment
-          }]' inline_comments.json > review_comments.json
-
-          # Construct full payload
-          jq -n \
-            --arg commit_id "${{ github.event.pull_request.head.sha }}" \
-            --arg event "COMMENT" \
-            --slurpfile comments review_comments.json \
-            '{commit_id: $commit_id, event: $event, comments: $comments[0]}' > full_review_payload.json
-
-          # Post review
-          echo "📝 Posting inline comments..."
-          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
-            -X POST \
-            --input full_review_payload.json
+          echo "📣 Posting inline comments..."
+          jq -c '.[]' filtered_comments.json | while read -r comment; do
+            path=$(echo "$comment" | jq -r '.file')
+            line=$(echo "$comment" | jq -r '.line')
+            body=$(echo "$comment" | jq -r '.comment')
+            gh pr comment ${{ github.event.pull_request.number }} \
+              --body "$body" \
+              --repo "${{ github.repository }}" \
+              --body-path <(echo "$body") \
+              --filename "$path" \
+              --position "$line" || echo "⚠️ Failed to post comment"
+          done
 
