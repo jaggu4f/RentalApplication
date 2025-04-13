@@ -39,30 +39,31 @@ jobs:
           RESPONSE=$(curl -s https://your-ai-model-endpoint || echo '{"error": "Model failed"}')
           echo "$RESPONSE" | jq . > openai_response.json || echo "{}" > openai_response.json
 
-      - name: Fallback to static response if AI fails
-        run: |
-          if jq -e '.error' openai_response.json > /dev/null; then
-            echo 'Using static fallback response'
-            cat <<'EOF' > openai_response.json
-            {
-              "review": {
-                "summary": "📝 Static fallback review: Minor improvements suggested.",
-                "comments": [
-                  {
-                    "file": "src/components/Button.tsx",
-                    "line": 1,
-                    "comment": "⚠️ Add TypeScript typings for better type safety."
-                  },
-                  {
-                    "file": "src/components/ButtonCancel.tsx",
-                    "line": 1,
-                    "comment": "⚠️ Missing prop types, consider adding a type interface."
-                  }
-                ]
-              }
+            - name: Fallback to static response if AI fails
+                  run: |
+                    if jq -e '.error' openai_response.json > /dev/null; then
+                      echo 'Using static fallback response'
+                      cat <<EOF > openai_response.json
+          {
+            "review": {
+              "summary": "📝 Static fallback review: Minor improvements suggested.",
+              "comments": [
+                {
+                  "file": "src/components/Button.tsx",
+                  "line": 1,
+                  "comment": "⚠️ Add TypeScript typings for better type safety."
+                },
+                {
+                  "file": "src/components/ButtonCancel.tsx",
+                  "line": 1,
+                  "comment": "⚠️ Missing prop types, consider adding a type interface."
+                }
+              ]
             }
-            EOF
+          }
+          EOF
           fi
+
 
       - name: Extract comments from response
         run: |
