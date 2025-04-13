@@ -12,26 +12,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get PR Diff with 0 context
+      - name: Fetch PR Diff
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
-          git diff origin/${{ github.event.pull_request.base.ref }} HEAD --unified=0 > pr_diff.txt
+          git diff --unified=0 origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
+          cat pr_diff.txt
 
-      - name: Parse changed lines from diff
-        id: changed_lines
+      - name: Parse diff and extract changed lines
         run: |
-          echo "[]" > changed_lines.json
-          awk '
-          /^diff --git/ { file="" }
-          /^+++ b\// { file=substr($0,7) }
-          /^@@/ {
-            match($0, /@@ \+([0-9]+)(,([0-9]+))? @@/, a);
-            start=a[1]; length=(a[3] == "" ? 1 : a[3]);
-            for (i=0; i<length; i++) {
-              printf("{\"file\":\"%s\",\"line\":%d}\n", file, start+i);
-            }
-          }
-          ' pr_diff.txt | jq -s '.' > changed_lines.json
+          # Ensure pr_diff.txt is not empty
+          if [ ! -f pr_diff.txt ] || [ ! -s pr_diff.txt ]; then
+            echo "⚠️ No changes detected in PR."
+            exit 0
+          fi
+
+          # Parse the diff and identify added lines
+          grep -E '^\+' pr_diff.txt | grep -v '^\+\+\+' | grep -v '^\+@@' | while read -r line; do
+            FILE=$(echo "$line" | awk -F ':' '{print $1}')
+            LINE=$(echo "$line" | awk -F ':' '{print $2}')
+            if [ ! -z "$FILE" ] && [ ! -z "$LINE" ]; then
+              echo "{\"file\": \"$FILE\", \"line\": $LINE}" >> changed_lines.json
+            fi
+          done
+
+          # Print changed lines for debugging
+          cat changed_lines.json
+
+      - name: Set CHANGED variable with fallback
+        run: |
+          if [ ! -s changed_lines.json ]; then
+            echo "⚠️ No changes detected."
+            exit 0
+          fi
+          CHANGED=$(jq -c '.[]' changed_lines.json)
+          echo "Changed lines: $CHANGED"
           
       - name: Call AI Model
         run: |
