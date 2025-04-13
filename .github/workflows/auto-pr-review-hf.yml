@@ -12,19 +12,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Fetch PR Diff (based on the latest commit)
+      - name: Fetch PR Diff (latest commit only)
         run: |
           echo "📥 Fetching PR and base branch..."
+          
           # Fetch the base branch (e.g., main, develop, etc.)
-          git fetch origin ${{ github.event.pull_request.base.ref }} 
-      
-          # Fetch the latest commit in the PR branch
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          
+          # Fetch the PR branch (latest commit)
           git fetch origin pull/${{ github.event.pull_request.number }}/head:pr_branch
-      
-          # Compare only the last commit of the PR branch with the base branch
-          git diff --unified=0 origin/${{ github.event.pull_request.base.ref }}...pr_branch > pr_diff.txt
-      
-          echo "📄 PR diff:"
+          
+          # Get the latest commit hash from the PR branch
+          LATEST_COMMIT=$(git log -n 1 --format=%H pr_branch)
+
+          echo "🔍 Comparing latest commit: $LATEST_COMMIT"
+          
+          # Compare the latest commit of the PR branch with the base branch (e.g., main)
+          git diff --unified=0 origin/${{ github.event.pull_request.base.ref }}...$LATEST_COMMIT > pr_diff.txt
+          
+          # Display the diff for debugging
           cat pr_diff.txt
 
       - name: Extract changed lines from PR diff
@@ -67,13 +73,10 @@ jobs:
           done < pr_diff.txt
       
           printf '%s\n' "${CHANGED_LINES[@]}" | jq -s '.' > changed_lines.json
-      
-          echo "✅ Final changed lines:"
           cat changed_lines.json
 
       - name: Check if changed_lines.json is empty
         run: |
-          # Ensure changed_lines.json is not empty
           if [ ! -s changed_lines.json ] || [ "$(cat changed_lines.json)" == "[]" ]; then
             echo "⚠️ No changes detected in the diff."
             exit 0
