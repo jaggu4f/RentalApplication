@@ -69,12 +69,12 @@ jobs:
           jq -c '.review.comments' openai_response.json > inline_comments.json
           jq -r '.review.summary' openai_response.json > summary.txt
 
-      - name: Post AI review summary
+      - name: Post AI Review as PR Comment
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            🤖 **AI Code Review Summary:**
-            $(cat summary.txt)
+            **🤖 AI Code Review Summary:**
+            ${{ steps.ai_review.outputs.review }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Post inline comments only if line changed
