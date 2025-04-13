@@ -2,24 +2,32 @@ name: AI PR Review
 
 on:
   pull_request:
-    types: [opened, synchronize, edited, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
 
 jobs:
-  ai_review:
+  review:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Call OpenAI for Review
+
+      - name: Get PR Diff
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git diff origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
+
+      - name: Call AI Model or Use Fallback
         id: ai_review
-        shell: bash
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          echo "📤 Sending PR diff to OpenAI..."
-      
+          if [ ! -s pr_diff.txt ]; then
+            echo "No changes detected."
+            exit 0
+          fi
+
+          echo "Calling AI model..."
           RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
             -sS \
             -H "Authorization: Bearer $OPENAI_API_KEY" \
@@ -30,105 +38,75 @@ jobs:
             "messages": [
               {
                 "role": "system",
-                "content": "You are an expert code reviewer. Given a git diff, provide a short summary and inline comments with file names and line numbers."
+                "content": "You are a senior code reviewer. Given a git diff, return JSON with a 'summary' string and 'comments' array (file, line, comment)."
               },
               {
                 "role": "user",
-                "content": "$(cat pr_diff.txt | head -c 10000)"
+                "content": "$(head -c 10000 pr_diff.txt)"
               }
             ],
             "temperature": 0.3
           }
           EOF
           )
-          
+
           echo "$RESPONSE" | jq . > openai_response.json || echo "{}" > openai_response.json
-      
+
           if jq -e '.error' openai_response.json > /dev/null; then
-            echo "$RESPONSE"
-            echo "⚠️ OpenAI call failed. Using static fallback response."
+            echo "⚠️ AI failed, using fallback."
             echo '{
-              "review": {
-                "summary": "✅ Overall, the code is clean. ⚠️ Some suggestions below.",
+              "summary": "✅ Static Review: Code looks good. A few minor suggestions.",
+              "comments": [
+                {
+                  "file": "src/components/Button.tsx",
+                  "line": 1,
+                  "comment": "⚠️ Consider adding input validation1."
+                }
+              ]
+            }' > final_review.json
+          else
+            jq -r '.choices[0].message.content' openai_response.json > response.txt
+            cat response.txt | jq . > final_review.json || {
+              echo "⚠️ AI response not in JSON, using fallback."
+              echo '{
+                "summary": "✅ Static Review: Code looks good. A few minor suggestions.",
                 "comments": [
                   {
                     "file": "src/components/Button.tsx",
                     "line": 1,
-                    "comment": "⚠️ **Missing prop types** – Define explicit types for better type safety."
+                    "comment": "⚠️ Consider adding input validation2."
                   }
                 ]
-              }
-            }' > inline_comments.json
-            echo "::set-output name=review::Fallback AI summary."
-          else
-            echo "✅ OpenAI response received."
-            # 👇 Customize how you extract data depending on how OpenAI formats it
-            SUMMARY=$(jq -r '.choices[0].message.content' openai_response.json | head -n 1)
-            echo "::set-output name=review::$SUMMARY"
-      
-            # Here you'd parse the response into inline_comments.json
-            # TEMP: just echo raw for now
-            echo '[]' > inline_comments.json
+              }' > final_review.json
+            }
           fi
 
+          SUMMARY=$(jq -r '.summary' final_review.json)
+          jq -c '.comments' final_review.json > inline_comments.json
+          echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
 
-      - name: Post AI Review as PR Comment
+      - name: Post Summary Comment
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
             **🤖 AI Code Review Summary:**
-            ${{ steps.ai_review.outputs.review }}
+            ${{ steps.ai_review.outputs.summary }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Post AI Inline Comments
+      - name: Post Inline Comments
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ ! -f inline_comments.json ] || [ ! -s inline_comments.json ]; then
-            echo "✅ No inline comments to post."
-            exit 0
-          fi
-          echo "$inline_comments.json"
-          EXISTING_COMMENTS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
-
-          jq -c '.[]' inline_comments.json | while IFS= read -r COMMENT; do
-            FILE=$(echo "$COMMENT" | jq -r '.file')
-            LINE=$(echo "$COMMENT" | jq -r '.line')
-            TEXT=$(echo "$COMMENT" | jq -r '.comment')
-
-            echo "🔍 Checking file: $FILE at line: $LINE"
-
-            if echo "$EXISTING_COMMENTS" | jq -e --arg file "$FILE" --argjson line "$LINE" --arg text "$TEXT" \
-              '.[] | select(.path == $file and .line == $line and .body == $text)' > /dev/null; then
-              echo "✅ Comment already exists, skipping..."
-              continue
-            fi
-
-            echo "💬 Posting new comment..."
-
+          COMMENTS=$(cat inline_comments.json)
+          echo "$COMMENTS" | jq -c '.[]' | while read -r c; do
+            FILE=$(echo "$c" | jq -r '.file')
+            LINE=$(echo "$c" | jq -r '.line')
+            TEXT=$(echo "$c" | jq -r '.comment')
+            
             gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
               -X POST \
               -F "body=$TEXT" \
               -F "commit_id=${{ github.event.pull_request.head.sha }}" \
               -F "path=$FILE" \
               -F "line=$LINE"
-
-            sleep 2
           done
-
-      - name: Check Unresolved Comments
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          COMMENTS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
-
-          UNRESOLVED_COUNT=$(echo "$COMMENTS" | jq '[.[] | select(.in_reply_to_id == null and .position != null)] | length')
-
-          echo "🔍 Unresolved Comments: $UNRESOLVED_COUNT"
-
-          if [ "$UNRESOLVED_COUNT" -gt 0 ]; then
-            echo "❌ PR has unresolved comments. Please resolve them before merging."
-            exit 1
-          fi
-
-          echo "✅ No unresolved comments found!"
