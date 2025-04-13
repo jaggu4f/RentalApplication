@@ -77,6 +77,14 @@ jobs:
             ${{ steps.ai_review.outputs.review }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debug and Parse Changed Lines
+        run: |
+          # Debugging: Ensure the file is present and valid
+          cat changed_lines.json || echo "⚠️ No changed_lines.json file found!"
+      
+          # If the file is present and valid, parse it
+          CHANGED=$(jq -c '.[]' changed_lines.json || echo "[]")
+          echo "Parsed changed lines: $CHANGED"
       - name: Post inline comments only if line changed
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
