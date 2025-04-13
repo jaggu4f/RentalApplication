@@ -93,21 +93,51 @@ jobs:
             ${{ steps.ai_review.outputs.summary }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Post Inline Comments
+      - name: Post AI Inline Comments
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMENTS=$(cat inline_comments.json)
-          echo "$COMMENTS" | jq -c '.[]' | while read -r c; do
-            FILE=$(echo "$c" | jq -r '.file')
-            LINE=$(echo "$c" | jq -r '.line')
-            TEXT=$(echo "$c" | jq -r '.comment')
-            
+          if [ ! -f inline_comments.json ] || [ ! -s inline_comments.json ]; then
+            echo "✅ No inline comments to post."
+            exit 0
+          fi
+      
+          EXISTING_COMMENTS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
+      
+          jq -c '.[]' inline_comments.json | while IFS= read -r COMMENT; do
+            FILE=$(echo "$COMMENT" | jq -r '.file')
+            LINE=$(echo "$COMMENT" | jq -r '.line')
+            TEXT=$(echo "$COMMENT" | jq -r '.comment')
+      
+            echo "🔍 Checking $FILE at line $LINE"
+      
+            # Get code at that line
+            CURRENT_LINE=$(sed -n "${LINE}p" "$FILE" | tr -d '\r\n')
+            COMMENT_HASH=$(echo "$CURRENT_LINE-$TEXT" | sha256sum | cut -d' ' -f1)
+      
+            ALREADY_EXISTS=$(echo "$EXISTING_COMMENTS" | jq -r --arg file "$FILE" --argjson line "$LINE" --arg text "$TEXT" '
+              .[] | select(.path == $file and .line == $line and .body == $text)')
+      
+            if [ -n "$ALREADY_EXISTS" ]; then
+              echo "⚠️ Comment already exists. Skipping unless code changed."
+      
+              # Check if code has changed since the comment
+              PREVIOUS_LINE=$(echo "$ALREADY_EXISTS" | jq -r '.body' | grep -oP '```[a-z]*\n\K.*?(?=\n```)' | head -n1 | tr -d '\r\n')
+              if [ "$PREVIOUS_LINE" = "$CURRENT_LINE" ]; then
+                echo "✅ Same code & comment exist. Skipping..."
+                continue
+              fi
+            fi
+      
+            echo "💬 Posting new comment..."
             gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
               -X POST \
               -F "body=$TEXT" \
               -F "commit_id=${{ github.event.pull_request.head.sha }}" \
               -F "path=$FILE" \
               -F "line=$LINE"
+      
+            sleep 2
           done
+
       
