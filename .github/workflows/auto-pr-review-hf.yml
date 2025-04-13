@@ -79,3 +79,47 @@ jobs:
             **🤖 AI Code Review Summary:**
             ${{ steps.ai_review.outputs.review }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post inline comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "💬 Posting inline comments..."
+      
+          EXISTING_COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} --json comments -q '.comments[].body')
+          CHANGED=$(jq -c '.[]' changed_lines.json)
+      
+          jq -c '.review.comments[]' openai_response.json | while read -r comment; do
+            FILE=$(echo "$comment" | jq -r '.file')
+            LINE=$(echo "$comment" | jq -r '.line')
+            BODY=$(echo "$comment" | jq -r '.comment')
+      
+            # Only post if file and line are in changed_lines.json
+            MATCH_FOUND=false
+            for CHANGE in $CHANGED; do
+              CHANGED_FILE=$(echo "$CHANGE" | jq -r '.file')
+              CHANGED_LINE=$(echo "$CHANGE" | jq -r '.line')
+      
+              if [[ "$FILE" == "$CHANGED_FILE" && "$LINE" -eq "$CHANGED_LINE" ]]; then
+                MATCH_FOUND=true
+                break
+              fi
+            done
+      
+            if $MATCH_FOUND; then
+              # Prevent duplicates
+              if echo "$EXISTING_COMMENTS" | grep -F "$BODY" > /dev/null; then
+                echo "⚠️ Skipping duplicate comment on $FILE:$LINE"
+              else
+                echo "💬 Commenting on $FILE:$LINE"
+                gh pr comment ${{ github.event.pull_request.number }} \
+                  --body "$BODY" \
+                  --body-file <(echo "$BODY") \
+                  --repo "${{ github.repository }}" \
+                  --body "$BODY" \
+                  --path "$FILE" \
+                  --position "$LINE"
+              fi
+            fi
+          done
+
