@@ -32,12 +32,13 @@ jobs:
             }
           }
           ' pr_diff.txt | jq -s '.' > changed_lines.json
-
-      - name: Call AI model
-        id: ai_call
+          
+      - name: Call AI Model
         run: |
+          echo "📡 Calling AI model..."
           RESPONSE=$(curl -s https://your-ai-model-endpoint || echo '{"error": "Model failed"}')
-          echo "$RESPONSE" | jq . > openai_response.json || echo "{}" > openai_response.json
+          echo "$RESPONSE" | jq . > openai_response.json || echo '{}' > openai_response.json
+
 
             - name: Fallback to static response if AI fails
                   run: |
