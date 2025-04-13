@@ -19,47 +19,51 @@ jobs:
           cat pr_diff.txt
 
       - name: Extract changed lines from PR diff
+        shell: bash
         run: |
           echo "🔍 Parsing diff..."
+      
+          if [ ! -f pr_diff.txt ] || [ ! -s pr_diff.txt ]; then
+            echo "⚠️ pr_diff.txt is missing or empty!"
+            echo "[]" > changed_lines.json
+            exit 0
+          fi
       
           CHANGED_LINES=()
           FILE=""
           LINE_NUM=0
       
-          if [ ! -s pr_diff.txt ]; then
-            echo "⚠️ No diff found in pr_diff.txt"
-            echo "[]" > changed_lines.json
-            exit 0
-          fi
-      
           while IFS= read -r line || [ -n "$line" ]; do
-            # Match new file name
+            # Detect file name
             if [[ "$line" =~ ^\+\+\+ ]]; then
               FILE=$(echo "$line" | sed -E 's|\+\+\+ b/||')
-            fi
-      
-            # Match hunk header and extract starting line number
-            if [[ "$line" =~ ^@@ ]]; then
-              LINE_NUM=$(echo "$line" | sed -E 's/^@@ -[0-9,]+ \+([0-9]+).*/\1/')
-              ((LINE_NUM--))  # Offset to track actual line updates
+              echo "📄 Found file: $FILE"
               continue
             fi
       
-            # Match added lines (avoid +++ metadata)
+            # Detect hunk header and extract new file line number
+            if [[ "$line" =~ ^@@ ]]; then
+              LINE_NUM=$(echo "$line" | sed -E 's/^@@ -[0-9,]+ \+([0-9]+).*/\1/')
+              ((LINE_NUM--))  # Pre-offset
+              echo "🔢 Hunk starts at line: $LINE_NUM"
+              continue
+            fi
+      
+            # Count lines
             if [[ "$line" =~ ^\+[^+] ]]; then
               ((LINE_NUM++))
+              echo "➕ Added line $LINE_NUM in $FILE"
               CHANGED_LINES+=("{\"file\": \"$FILE\", \"line\": $LINE_NUM}")
             elif [[ "$line" =~ ^[^-] ]]; then
               ((LINE_NUM++))
             fi
           done < pr_diff.txt
       
-          # Output JSON array to file
-          printf '%s\n' "${CHANGED_LINES[@]}" | jq -s '.' > changed_lines.json
+          # Save changed lines to JSON
+          printf '%s\n' "${CHANGED_LINES[@]}" | jq -s '.' > changed_lines.json || echo "[]" > changed_lines.json
       
-          echo "✅ Parsed changed lines:"
+          echo "✅ Final changed lines:"
           cat changed_lines.json
-
 
       - name: Check if changed_lines.json is empty
         run: |
