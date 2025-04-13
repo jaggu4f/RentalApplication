@@ -18,6 +18,12 @@ jobs:
           git diff --unified=0 origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
           cat pr_diff.txt
 
+      - name: Fetch PR Diff
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git diff --unified=0 origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
+          cat pr_diff.txt
+
       - name: Parse diff and extract changed lines
         run: |
           # Ensure pr_diff.txt is not empty
@@ -25,6 +31,9 @@ jobs:
             echo "⚠️ No changes detected in PR."
             exit 0
           fi
+
+          # Create or clear changed_lines.json if any changes are detected
+          echo "[]" > changed_lines.json
 
           # Parse the diff and identify added lines
           grep -E '^\+' pr_diff.txt | grep -v '^\+\+\+' | grep -v '^\+@@' | while read -r line; do
@@ -38,10 +47,11 @@ jobs:
           # Print changed lines for debugging
           cat changed_lines.json
 
-      - name: Set CHANGED variable with fallback
+      - name: Check if changed_lines.json is empty
         run: |
-          if [ ! -s changed_lines.json ]; then
-            echo "⚠️ No changes detected."
+          # Ensure changed_lines.json is not empty
+          if [ ! -s changed_lines.json ] || [ "$(cat changed_lines.json)" == "[]" ]; then
+            echo "⚠️ No changes detected in the diff."
             exit 0
           fi
           CHANGED=$(jq -c '.[]' changed_lines.json)
