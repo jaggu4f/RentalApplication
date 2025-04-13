@@ -12,10 +12,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Fetch PR Diff
+      - name: Fetch PR Diff (git version)
         run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git diff --unified=0 origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
+          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr_branch
+          git diff --unified=0 origin/${{ github.event.pull_request.base.ref }}...pr_branch > pr_diff.txt
           cat pr_diff.txt
 
       - name: Extract changed lines from PR diff
