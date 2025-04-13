@@ -85,8 +85,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "💬 Posting inline comments..."
-      
-          EXISTING_COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} --json comments -q '.comments[].body')
+          HEAD_SHA=$(git rev-parse HEAD)
           CHANGED=$(jq -c '.[]' changed_lines.json)
       
           jq -c '.review.comments[]' openai_response.json | while read -r comment; do
@@ -94,12 +93,11 @@ jobs:
             LINE=$(echo "$comment" | jq -r '.line')
             BODY=$(echo "$comment" | jq -r '.comment')
       
-            # Only post if file and line are in changed_lines.json
+            # Check if the comment is on a changed line
             MATCH_FOUND=false
             for CHANGE in $CHANGED; do
               CHANGED_FILE=$(echo "$CHANGE" | jq -r '.file')
               CHANGED_LINE=$(echo "$CHANGE" | jq -r '.line')
-      
               if [[ "$FILE" == "$CHANGED_FILE" && "$LINE" -eq "$CHANGED_LINE" ]]; then
                 MATCH_FOUND=true
                 break
@@ -107,19 +105,20 @@ jobs:
             done
       
             if $MATCH_FOUND; then
-              # Prevent duplicates
-              if echo "$EXISTING_COMMENTS" | grep -F "$BODY" > /dev/null; then
-                echo "⚠️ Skipping duplicate comment on $FILE:$LINE"
-              else
-                echo "💬 Commenting on $FILE:$LINE"
-                gh pr comment ${{ github.event.pull_request.number }} \
-                  --body "$BODY" \
-                  --body-file <(echo "$BODY") \
-                  --repo "${{ github.repository }}" \
-                  --body "$BODY" \
-                  --path "$FILE" \
-                  --position "$LINE"
-              fi
+              echo "💬 Commenting on $FILE:$LINE"
+              COMMENT_PAYLOAD=$(jq -n \
+                --arg body "$BODY" \
+                --arg path "$FILE" \
+                --argjson line "$LINE" \
+                --arg sha "$HEAD_SHA" \
+                '{body: $body, path: $path, line: $line, side: "RIGHT", commit_id: $sha}')
+      
+              curl -s -X POST \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                https://api.github.com/repos/${{ github.repository }}/pulls/comments \
+                -d "$COMMENT_PAYLOAD"
             fi
           done
+
 
