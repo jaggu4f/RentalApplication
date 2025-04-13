@@ -19,9 +19,8 @@ jobs:
           cat pr_diff.txt
 
       - name: Extract changed lines from PR diff
-        shell: bash
         run: |
-          echo "🔍 Parsing diff..."
+          echo "🔍 Parsing PR diff to extract changed lines..."
       
           if [ ! -s pr_diff.txt ]; then
             echo "⚠️ pr_diff.txt is missing or empty!"
@@ -30,37 +29,36 @@ jobs:
           fi
       
           CHANGED_LINES=()
-          FILE=""
+          CURRENT_FILE=""
           LINE_NUM=0
-          CURRENT_LINE=0
-          ADDED_LINE=0
       
           while IFS= read -r line || [ -n "$line" ]; do
-            # Detect file path
+            # Get filename from +++ lines
             if [[ "$line" =~ ^\+\+\+ ]]; then
-              FILE=$(echo "$line" | sed -E 's|\+\+\+ b/||')
+              CURRENT_FILE=$(echo "$line" | sed -E 's|\+\+\+ b/||')
               continue
             fi
       
-            # Detect hunk header, get starting line number of new file
+            # Get starting line number from @@ header
             if [[ "$line" =~ ^@@ ]]; then
-              LINE_NUM=$(echo "$line" | sed -nE 's/^@@ -[0-9,]+ \+([0-9]+).*/\1/p')
-              CURRENT_LINE=$LINE_NUM
+              LINE_NUM=$(echo "$line" | sed -E 's/^@@ -[0-9,]+ \+([0-9]+).*/\1/')
+              LINE_NUM=$((LINE_NUM - 1)) # pre-adjust before counting added lines
               continue
             fi
       
-            # Only consider added lines (not hunk headers or file names)
+            # If it's an added line (but not a hunk header)
             if [[ "$line" =~ ^\+[^+] ]]; then
-              CHANGED_LINES+=("{\"file\": \"$FILE\", \"line\": $CURRENT_LINE}")
-            fi
-      
-            # Update line number for both added and unchanged lines
-            if [[ ! "$line" =~ ^- ]]; then
-              ((CURRENT_LINE++))
+              LINE_NUM=$((LINE_NUM + 1))
+              if [[ -n "$CURRENT_FILE" ]]; then
+                CHANGED_LINES+=("{\"file\": \"$CURRENT_FILE\", \"line\": $LINE_NUM}")
+              fi
+            elif [[ ! "$line" =~ ^- ]]; then
+              LINE_NUM=$((LINE_NUM + 1))
             fi
           done < pr_diff.txt
       
-          printf '%s\n' "${CHANGED_LINES[@]}" | jq -s '.' > changed_lines.json || echo "[]" > changed_lines.json
+          printf '%s\n' "${CHANGED_LINES[@]}" | jq -s '.' > changed_lines.json
+      
           echo "✅ Final changed lines:"
           cat changed_lines.json
 
