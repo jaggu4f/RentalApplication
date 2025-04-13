@@ -18,12 +18,6 @@ jobs:
           git diff --unified=0 origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
           cat pr_diff.txt
 
-      - name: Fetch PR Diff
-        run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git diff --unified=0 origin/${{ github.event.pull_request.base.ref }} HEAD > pr_diff.txt
-          cat pr_diff.txt
-
       - name: Parse diff and extract changed lines
         run: |
           # Ensure pr_diff.txt is not empty
@@ -56,42 +50,6 @@ jobs:
           fi
           CHANGED=$(jq -c '.[]' changed_lines.json)
           echo "Changed lines: $CHANGED"
-          
-      - name: Call AI Model
-        run: |
-          echo "📡 Calling AI model..."
-          RESPONSE=$(curl -s https://your-ai-model-endpoint || echo '{"error": "Model failed"}')
-          echo "$RESPONSE" | jq . > openai_response.json || echo '{}' > openai_response.json
-
-      - name: Fallback to static response if AI fails
-        run: |
-            if jq -e '.error' openai_response.json > /dev/null; then
-              echo '⚠️ Using static fallback response'
-              cat <<EOF > openai_response.json
-            {
-              "review": {
-                "summary": "📝 Static fallback review: Minor improvements suggested.",
-                "comments": [
-                  {
-                    "file": "src/components/Button.tsx",
-                    "line": 1,
-                    "comment": "⚠️ Add TypeScript typings for better type safety."
-                  },
-                  {
-                    "file": "src/components/ButtonCancel.tsx",
-                    "line": 1,
-                    "comment": "⚠️ Missing prop types, consider adding a type interface."
-                  }
-                ]
-              }
-            }
-            EOF
-            fi
-
-      - name: Extract comments from response
-        run: |
-          jq -c '.review.comments' openai_response.json > inline_comments.json
-          jq -r '.review.summary' openai_response.json > summary.txt
 
       - name: Post AI Review as PR Comment
         uses: thollander/actions-comment-pull-request@v2
@@ -100,48 +58,3 @@ jobs:
             **🤖 AI Code Review Summary:**
             ${{ steps.ai_review.outputs.review }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Debug and Parse Changed Lines
-        run: |
-          # Debugging: Ensure the file is present and valid
-          cat changed_lines.json || echo "⚠️ No changed_lines.json file found!"
-      
-          # If the file is present and valid, parse it
-          CHANGED=$(jq -c '.[]' changed_lines.json || echo "[]")
-          echo "Parsed changed lines: $CHANGED"
-      - name: Post inline comments only if line changed
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          CHANGED=$(jq -c '.[]' changed_lines.json)
-          EXISTING=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments)
-
-          jq -c '.[]' inline_comments.json | while read -r COMMENT; do
-            FILE=$(echo "$COMMENT" | jq -r '.file')
-            LINE=$(echo "$COMMENT" | jq -r '.line')
-            TEXT=$(echo "$COMMENT" | jq -r '.comment')
-
-            # Check if line is in changed lines
-            MATCHED=$(echo "$CHANGED" | jq -e --arg file "$FILE" --argjson line "$LINE" \
-              'select(.file == $file and .line == $line)')
-            if [ -z "$MATCHED" ]; then
-              echo "🛑 Skipping unchanged line: $FILE:$LINE"
-              continue
-            fi
-
-            # Check if comment already exists
-            if echo "$EXISTING" | jq -e --arg file "$FILE" --argjson line "$LINE" --arg text "$TEXT" \
-              '.[] | select(.path == $file and .line == $line and .body == $text)' > /dev/null; then
-              echo "✅ Comment already exists for $FILE:$LINE"
-              continue
-            fi
-
-            echo "💬 Posting inline comment to $FILE:$LINE"
-            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
-              -X POST \
-              -F "body=$TEXT" \
-              -F "commit_id=${{ github.event.pull_request.head.sha }}" \
-              -F "path=$FILE" \
-              -F "line=$LINE"
-            sleep 2
-          done
