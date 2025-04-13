@@ -12,18 +12,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Fetch PR Diff (based on latest commit)
+      - name: Fetch PR Diff (based on the latest commit)
         run: |
           echo "📥 Fetching PR and base branch..."
-          git fetch origin ${{ github.event.pull_request.base.ref }}  # Base branch
-          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr_branch  # Latest commit in the PR
+          # Fetch the base branch (e.g., main, develop, etc.)
+          git fetch origin ${{ github.event.pull_request.base.ref }} 
       
-          echo "📐 Generating PR diff..."
+          # Fetch the latest commit in the PR branch
+          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr_branch
+      
+          # Compare only the last commit of the PR branch with the base branch
           git diff --unified=0 origin/${{ github.event.pull_request.base.ref }}...pr_branch > pr_diff.txt
       
           echo "📄 PR diff:"
           cat pr_diff.txt
-
 
       - name: Extract changed lines from PR diff
         run: |
