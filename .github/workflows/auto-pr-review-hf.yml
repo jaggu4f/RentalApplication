@@ -108,15 +108,29 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           COMMENTS=$(cat inline_comments.json)
+          REVIEW_COMMENTS="[]"
+
           echo "$COMMENTS" | jq -c '.[]' | while read -r c; do
             FILE=$(echo "$c" | jq -r '.file')
             LINE=$(echo "$c" | jq -r '.line')
             TEXT=$(echo "$c" | jq -r '.comment')
-            
-            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
-              -X POST \
-              -F "body=$TEXT" \
-              -F "commit_id=${{ github.event.pull_request.head.sha }}" \
-              -F "path=$FILE" \
-              -F "line=$LINE"
+
+            COMMENT_OBJ=$(jq -n \
+              --arg path "$FILE" \
+              --argjson position "$LINE" \
+              --arg body "$TEXT" \
+              '{path: $path, position: $position, body: $body}')
+
+            REVIEW_COMMENTS=$(echo "$REVIEW_COMMENTS" | jq --argjson comment "$COMMENT_OBJ" '. += [$comment]')
           done
+
+          echo "$REVIEW_COMMENTS" > review_comments.json
+          cat review_comments.json
+
+          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+            -X POST \
+            -F body="🤖 AI Code Review" \
+            -F event=COMMENT \
+            -F comments="$(cat review_comments.json)" \
+            -F commit_id=${{ github.event.pull_request.head.sha }}
+
