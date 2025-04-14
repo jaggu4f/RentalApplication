@@ -60,12 +60,12 @@ jobs:
                 {
                   "file": "src/components/Button.tsx",
                   "line": 1,
-                  "comment": "⚠️ Consider adding input validation1."
+                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
                 },
                 {
                   "file": "src/components/ButtonCancel.tsx",
                   "line": 1,
-                  "comment": "⚠️ Consider adding input validation1."
+                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
                 }
               ]
             }' > final_review.json
@@ -79,12 +79,12 @@ jobs:
                   {
                     "file": "src/components/Button.tsx",
                     "line": 1,
-                    "comment": "⚠️ Consider adding input validation2."
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
                   },
                   {
                   "file": "src/components/ButtonCancel.tsx",
                   "line": 1,
-                  "comment": "⚠️ Consider adding input validation1."
+                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
                 }
                 ]
               }' > final_review.json
