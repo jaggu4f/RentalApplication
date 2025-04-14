@@ -57,12 +57,17 @@ jobs:
             echo '{
               "summary": "✅ Static Review: Code looks good. A few minor suggestions.",
               "comments": [
-                {
-                  "file": "src/components/Button.tsx",
-                  "line": 1,
-                  "comment": "⚠️ Consider adding input validation1."
-                }
-              ]
+                  {
+                    "file": "components/Button.tsx",
+                    "line": 3,
+                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
+                  },
+                  {
+                    "file": "components/ButtonCancel.tsx",
+                    "line": 3,
+                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
+                  }
+                ]
             }' > final_review.json
           else
             jq -r '.choices[0].message.content' openai_response.json > response.txt
@@ -73,12 +78,12 @@ jobs:
                 "comments": [
                   {
                     "file": "components/Button.tsx",
-                    "line": 1,
+                    "line": 3,
                     "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
                   },
                   {
-                    "file": "components/Button.tsx",
-                    "line": 1,
+                    "file": "components/ButtonCancel.tsx",
+                    "line": 3,
                     "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
                   }
                 ]
