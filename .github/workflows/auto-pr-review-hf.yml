@@ -57,17 +57,12 @@ jobs:
             echo '{
               "summary": "✅ Static Review: Code looks good. A few minor suggestions.",
               "comments": [
-                  {
-                    "file": "components/Button.tsx",
-                    "line": 3,
-                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                  },
-                  {
-                    "file": "components/ButtonCancel.tsx",
-                    "line": 3,
-                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
-                  }
-                ]
+                {
+                  "file": "src/components/Button.tsx",
+                  "line": 1,
+                  "comment": "⚠️ Consider adding input validation1."
+                }
+              ]
             }' > final_review.json
           else
             jq -r '.choices[0].message.content' openai_response.json > response.txt
@@ -77,14 +72,9 @@ jobs:
                 "summary": "✅ Static Review: Code looks good. A few minor suggestions.",
                 "comments": [
                   {
-                    "file": "components/Button.tsx",
-                    "line": 3,
-                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                  },
-                  {
-                    "file": "components/ButtonCancel.tsx",
-                    "line": 3,
-                    "comment": "⚠️ **Implicit `any` type** – The `date` parameter should have an explicit type annotation to prevent runtime errors.\n\n💡 Suggested change:\n```ts\nexport const formatDate = (date: string | number | Date): string => {\n  return new Date(date).toLocaleDateString();\n};\n```"
+                    "file": "src/components/Button.tsx",
+                    "line": 1,
+                    "comment": "⚠️ Consider adding input validation2."
                   }
                 ]
               }' > final_review.json
@@ -108,29 +98,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           COMMENTS=$(cat inline_comments.json)
-          REVIEW_COMMENTS="[]"
-
           echo "$COMMENTS" | jq -c '.[]' | while read -r c; do
             FILE=$(echo "$c" | jq -r '.file')
             LINE=$(echo "$c" | jq -r '.line')
             TEXT=$(echo "$c" | jq -r '.comment')
-
-            COMMENT_OBJ=$(jq -n \
-              --arg path "$FILE" \
-              --argjson position "$LINE" \
-              --arg body "$TEXT" \
-              '{path: $path, position: $position, body: $body}')
-
-            REVIEW_COMMENTS=$(echo "$REVIEW_COMMENTS" | jq --argjson comment "$COMMENT_OBJ" '. += [$comment]')
+            
+            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+              -X POST \
+              -F "body=$TEXT" \
+              -F "commit_id=${{ github.event.pull_request.head.sha }}" \
+              -F "path=$FILE" \
+              -F "line=$LINE"
           done
-
-          echo "$REVIEW_COMMENTS" > review_comments.json
-          cat review_comments.json
-
-          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
-            -X POST \
-            -F body="🤖 AI Code Review" \
-            -F event=COMMENT \
-            -F comments="$(cat review_comments.json)" \
-            -F commit_id=${{ github.event.pull_request.head.sha }}
-
+      
