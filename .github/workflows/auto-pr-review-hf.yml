@@ -120,4 +120,3 @@ jobs:
               -F "path=$FILE" \
               -F "line=$LINE"
           done
-      
