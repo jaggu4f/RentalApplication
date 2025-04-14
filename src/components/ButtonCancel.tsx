@@ -1,8 +1,3 @@
-interface ButtonProps {
-  label: string;
-  onClick: () => void;
-}
-
-const Button: React.FC<ButtonProps> = ({ label, onClick }) => {
+const Button = ({ label, onClick }) => {
   return <button onClick={onClick}>{label}</button>;
 };
