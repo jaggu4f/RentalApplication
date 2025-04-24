@@ -71,24 +71,7 @@ jobs:
             }' > final_review.json
           else
             jq -r '.choices[0].message.content' openai_response.json > response.txt
-            cat response.txt | jq . > final_review.json || {
-              echo "⚠️ AI response not in JSON, using fallback."
-              echo '{
-                "summary": "✅ Static Review: Code looks good. A few minor suggestions.",
-                "comments": [
-                  {
-                    "file": "src/components/Button.tsx",
-                    "line": 1,
-                    "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                  },
-                  {
-                  "file": "src/components/ButtonCancel.tsx",
-                  "line": 1,
-                  "comment": "⚠️ **Missing prop types or TypeScript typings** – Consider explicitly defining the prop types for better type safety.\n\n💡 Suggested change:\n```tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ label, onClick }) => {\n  return <button onClick={onClick}>{label}</button>;\n};\n```"
-                }
-                ]
-              }' > final_review.json
-            }
+            cat response.txt | jq . > final_review.json
           fi
 
           SUMMARY=$(jq -r '.summary' final_review.json)
